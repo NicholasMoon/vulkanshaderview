@@ -1,3 +1,7 @@
+#ifndef INCLUDES_H
+#define INCLUDES_H
+
+
 // GLFW
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -12,26 +16,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
-// STB
-#define STB_IMAGE_IMPLEMENTATION
 
 // TINY OBJ
 #define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 
-#define DEBUG
 
-#include "myVK.h"
+// STB
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
-int main() {
-    MyVK app = MyVK();
 
-    try {
-        app.run();
-    }
-    catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
 
-    return EXIT_SUCCESS;
-}
+#endif
