@@ -35,12 +35,17 @@
 
 #include "debugmessenger.h"
 
+#include "physicaldevice.h"
+#include "logicaldevice.h"
+#include "image.h"
+#include "texture.h"
+#include "depthbuffer.h"
+#include "msaabuffer.h"
+#include "swapchain.h"
+
 #include "mesh.h"
 #include "vertex.h"
 #include "ubo.h"
-
-
-
 
 
 
@@ -58,7 +63,7 @@ public:
     uint32_t currentFrame = 0;
 
     std::string MODEL_PATH = "models/sphere.obj";
-    const std::string TEXTURE_PATH = "textures/red.png";
+    const std::string TEXTURE_PATH = "textures/wf.png";
 
 #ifndef DEBUG
     const bool enableValidationLayers = false;
@@ -71,26 +76,17 @@ public:
         "VK_LAYER_KHRONOS_validation"
     };
 
-    // name of device extensions to enable (swapchain)
-    const std::vector<const char*> deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
+    
 
 private:
 
     GLFWwindow* window; // GLFW Window
     VkInstance instance; // Vulkan Instance
     VkDebugUtilsMessengerEXT debugMessenger; // Debug Messenger
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // GPU
-    VkDevice device; // Logical Device
-    VkQueue graphicsQueue; // Graphics Queue
-    VkQueue presentQueue; // Window Surface Queue
+    PhysicalDevice physicaldevice;
+    LogicalDevice logicaldevice;  
     VkSurfaceKHR surface; // Window Surface
-    VkSwapchainKHR swapChain; // Vulkan Swapchain
-    std::vector<VkImage> swapChainImages; // Vector of images in the swapchain
-    VkFormat swapChainImageFormat; // format (color depth) of images in our swapchain
-    VkExtent2D swapChainExtent; // extent (resolution/pixels) of images in our swapchain
-    std::vector<VkImageView> swapChainImageViews; // vector of image views (interface with each image in swapchain)
+    Swapchain swapchain;
     VkRenderPass renderPass; // handle for our renderpass configuration
     VkDescriptorSetLayout descriptorSetLayout; // handle for uniform buffor object descriptor
     VkPipelineLayout pipelineLayout; // handle for uniform shader variables in pipeline
@@ -110,19 +106,12 @@ private:
     std::vector<VkDeviceMemory> uniformBuffersMemory; // array of uniform buffer memory (one for each frame in flight)
     VkDescriptorPool descriptorPool; // pool of descriptor sets
     std::vector<VkDescriptorSet> descriptorSets; // array of descriptor sets
-    uint32_t mipLevels; // mip levels for texture image
-    VkImage textureImage; // handle for texture image
-    VkDeviceMemory textureImageMemory; // handle for memory of texture image
-    VkImageView textureImageView; // handle for texture image view
-    VkSampler textureSampler; // handle for texture sampler
-    VkImage depthImage; // depth buffer image
-    VkDeviceMemory depthImageMemory; // memory allocated for depth buffer
-    VkImageView depthImageView; // image view for depth buffer
-    VkImage colorImage; // msaa image
-    VkDeviceMemory colorImageMemory; // msaa image memory
-    VkImageView colorImageView; // msaa image view
+    
+    
+    DepthBuffer depthbuffer;
+    MSAABuffer msaabuffer;
 
-    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT; // max supported msaa samples
+    
 
     std::unique_ptr<Mesh> myMesh;
 
@@ -131,22 +120,7 @@ private:
     // sets up the debug messenger handle and set debug callback parameters
     void setupDebugMessenger();
 
-    // function to print validation callback to standard error
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType,
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData) {
-
-        // 
-        if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-            // Message is important enough to show
-            std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-        }
-
-        // NOTE: only return true to test validation layers themselves
-        return VK_FALSE;
-    }
+    
 
     
 
@@ -167,39 +141,11 @@ private:
     // create vulkan instance
     void createInstance();
 
-    // tests whether passed in GPU has the extensions we need
-    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-
-    // tests whether passed in GPU has the extensions/queue families we need
-    bool isDeviceSuitable(VkPhysicalDevice device);
-
-    // get max msaa sample count supported by physical device
-    VkSampleCountFlagBits getMaxUsableSampleCount();
-
     // pick the GPU we will use
     void pickPhysicalDevice();
 
-    // struct that holds list of queue families
-    struct QueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily; // queue family that supports graphics operations
-        std::optional<uint32_t> presentFamily; // queue family that supports window presentation operations
 
-        bool isComplete() {
-            return graphicsFamily.has_value() && presentFamily.has_value();
-        }
-    };
-
-    // Finds a graphics queue family (given a GPU)
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-
-
-    struct SwapChainSupportDetails {
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
-    };
-
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+   
 
     // chooses swapchain surface format (color depth, color space, image resolution, etc.)
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
