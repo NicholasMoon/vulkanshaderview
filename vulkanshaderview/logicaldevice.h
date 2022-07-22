@@ -26,6 +26,8 @@ public:
     VkQueue graphicsQueue; // Graphics Queue
     VkQueue presentQueue; // Window Surface Queue
 
+#define DEBUG
+
 #ifndef DEBUG
     const bool enableValidationLayers = false;
 #else

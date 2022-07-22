@@ -5,7 +5,7 @@ Image::Image() : width(0), height(0) {}
 Image::~Image() {}
 
 // create vulkan image
-void Image::createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, LogicalDevice& logicaldevice) {
+void Image::createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, LogicalDevice& logicaldevice, PhysicalDevice &physicaldevice) {
     // vulkan image creation struct
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -15,7 +15,7 @@ void Image::createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, Vk
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = mipLevels;
     imageInfo.arrayLayers = 1;
-    imageInfo.format = format;
+    imageInfo.format = vkFormat;
     imageInfo.tiling = vkTiling;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = vkUsageFlags;
@@ -33,7 +33,7 @@ void Image::createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, Vk
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, vkMemoryPropertyFlags);
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, vkMemoryPropertyFlags, physicaldevice);
 
     if (vkAllocateMemory(logicaldevice.device, &allocInfo, nullptr, &vkImageMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate image memory!");
@@ -42,8 +42,8 @@ void Image::createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, Vk
     vkBindImageMemory(logicaldevice.device, vkImage, vkImageMemory, 0);
 }
 
-void Image::copyBufferToImage(VkBuffer buffer) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+void Image::copyBufferToImage(VkBuffer buffer, VkCommandPool& commandPool, LogicalDevice &logicaldevice) {
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, logicaldevice);
 
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
@@ -71,12 +71,12 @@ void Image::copyBufferToImage(VkBuffer buffer) {
         &region
     );
 
-    endSingleTimeCommands(commandBuffer);
+    endSingleTimeCommands(commandBuffer, commandPool, logicaldevice);
 }
 
 // function to synchronize transition between staging buffer and vulkan image
-void Image::transitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+void Image::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, VkCommandPool& commandPool, LogicalDevice &logicaldevice) {
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, logicaldevice);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -89,7 +89,7 @@ void Image::transitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkIm
     if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-        if (hasStencilComponent(format)) {
+        if (hasStencilComponent()) {
             barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
         }
     }
@@ -141,23 +141,23 @@ void Image::transitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkIm
         1, &barrier
     );
 
-    endSingleTimeCommands(commandBuffer);
+    endSingleTimeCommands(commandBuffer, commandPool, logicaldevice);
 }
 
 // creates an image view
-VkImageView Image::createImageView(VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels, LogicalDevice& logicaldevice) {
+VkImageView Image::createImageView(uint32_t mipLevels, LogicalDevice& logicaldevice) {
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = vkImage;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = format;
+    viewInfo.format = vkFormat;
     // used for swizzling components of image
     viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
     viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
     viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
     // image used as a color target or depth target etc
-    viewInfo.subresourceRange.aspectMask = aspectFlags;
+    viewInfo.subresourceRange.aspectMask = vkImageAspectFlags;
     // mip mapping
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = mipLevels;
@@ -171,4 +171,8 @@ VkImageView Image::createImageView(VkFormat format, VkImageAspectFlags aspectFla
     }
 
     return imageView;
+}
+
+bool Image::hasStencilComponent() {
+    return vkFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || vkFormat == VK_FORMAT_D24_UNORM_S8_UINT;
 }

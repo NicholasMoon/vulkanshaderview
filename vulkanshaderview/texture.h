@@ -22,11 +22,11 @@ public:
 	~Texture();
 
 	// creates a texture from an image
-	void createTextureImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
+	void createTextureImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, VkCommandPool& commandPool);
 	// generates mip maps of a source image
-	void generateMipmaps(VkFormat imageFormat, PhysicalDevice& physicaldevice);
+	void generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, VkCommandPool& commandPool);
 
-	void createTextureImageView();
+	void createTextureImageView(LogicalDevice& logicaldevice);
 
 	// create texture sampler used to access image texels in fragment shader
 	void createTextureSampler(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
@@ -34,6 +34,12 @@ public:
 	uint32_t mipLevels;			// number of mip levels (calculated from width and height of image)
 	VkSampler vkTextureSampler;	// handle for texture sampler
 	std::string fileName;
+
+	VkImage get_vkImage() { return vkImage; }
+	VkDeviceMemory get_vkImageMemory() { return vkImageMemory; }
+	VkImageView get_vkImageView() { return vkImageView; }
+	VkFormat get_vkFormat() { return vkFormat; }
+
 private:
 	
 };

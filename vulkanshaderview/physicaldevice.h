@@ -43,4 +43,7 @@ public:
 private:
 
 };
+
+// get good memory type for buffer
+uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, PhysicalDevice& physicaldevice);
 #endif

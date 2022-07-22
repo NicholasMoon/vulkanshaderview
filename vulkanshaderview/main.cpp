@@ -18,8 +18,6 @@
 // TINY OBJ
 #define TINYOBJLOADER_IMPLEMENTATION
 
-#define DEBUG
-
 #include "myVK.h"
 
 int main() {

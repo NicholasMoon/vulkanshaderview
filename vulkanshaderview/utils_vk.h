@@ -8,12 +8,7 @@
 #include <optional>
 #include <vector>
 
-// function to print validation callback to standard error
-VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData);
+
 
 // struct that holds list of queue families
 struct QueueFamilyIndices {
@@ -30,5 +25,7 @@ struct SwapChainSupportDetails {
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
 };
+
+
 
 #endif
