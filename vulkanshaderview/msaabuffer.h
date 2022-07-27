@@ -15,6 +15,8 @@
 #include "logicaldevice.h"
 #include "swapchain.h"
 
+class Swapchain;
+
 class MSAABuffer : Image {
 public:
 	MSAABuffer();

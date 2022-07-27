@@ -5,7 +5,7 @@ Texture::Texture() {}
 Texture::~Texture() {}
 
 // creates a texture from an image
-void Texture::createTextureImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, VkCommandPool& commandPool) {
+void Texture::createTextureImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool) {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(texturepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -28,35 +28,34 @@ void Texture::createTextureImage(std::string texturepath, LogicalDevice& logical
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
     // staging buffer for image data
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, logicaldevice, physicaldevice);
+    DataBuffer stagingBuffer(imageSize);
+    stagingBuffer.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
 
     // transfer data to staging buffer
     void* data;
-    vkMapMemory(logicaldevice.device, stagingBufferMemory, 0, imageSize, 0, &data);
+    vkMapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, 0, imageSize, 0, &data);
     memcpy(data, pixels, static_cast<size_t>(imageSize));
-    vkUnmapMemory(logicaldevice.device, stagingBufferMemory);
+    vkUnmapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory);
 
     stbi_image_free(pixels);
 
     createImage(mipLevels, VK_SAMPLE_COUNT_1_BIT, logicaldevice, physicaldevice);
 
     // transition the texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-    transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels, commandPool, logicaldevice);
+    transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels, commandpool, logicaldevice);
 
     // execute the buffer to image copy operation
-    copyBufferToImage(stagingBuffer, commandPool, logicaldevice);
+    copyBufferToImage(stagingBuffer.vkBuffer, commandpool, logicaldevice);
 
     //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
-    generateMipmaps(physicaldevice, logicaldevice, commandPool);
+    generateMipmaps(physicaldevice, logicaldevice, commandpool);
 
-    vkDestroyBuffer(logicaldevice.device, stagingBuffer, nullptr);
-    vkFreeMemory(logicaldevice.device, stagingBufferMemory, nullptr);
+    vkDestroyBuffer(logicaldevice.device, stagingBuffer.vkBuffer, nullptr);
+    vkFreeMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, nullptr);
 }
 
 // generates mip maps of a source image
-void Texture::generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice &logicaldevice, VkCommandPool& commandPool) {
+void Texture::generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice &logicaldevice, CommandPool& commandpool) {
     // Check if image format supports linear blitting
     VkFormatProperties formatProperties;
     vkGetPhysicalDeviceFormatProperties(physicaldevice.physicalDevice, vkFormat, &formatProperties);
@@ -65,7 +64,7 @@ void Texture::generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice &log
         throw std::runtime_error("texture image format does not support linear blitting!");
     }
 
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, logicaldevice);
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandpool, logicaldevice);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -141,7 +140,7 @@ void Texture::generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice &log
         0, nullptr,
         1, &barrier);
 
-    endSingleTimeCommands(commandBuffer, commandPool, logicaldevice);
+    endSingleTimeCommands(commandBuffer, commandpool, logicaldevice);
 }
 
 // creates a texture image view

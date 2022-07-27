@@ -13,6 +13,8 @@
 #include "logicaldevice.h"
 #include "swapchain.h"
 #include "msaabuffer.h"
+#include "renderpass.h"
+#include "descriptorsetlayout.h"
 #include "vertex.h"
 
 class GraphicsPipeline {
@@ -20,7 +22,7 @@ public:
 	GraphicsPipeline();
 	~GraphicsPipeline();
 
-	void createGraphicsPipeline(Swapchain& swapchain, LogicalDevice& logicaldevice, VkDescriptorSetLayout& descriptorSetLayout, VkRenderPass& renderPass, MSAABuffer& msaabuffer);
+	void createGraphicsPipeline(Swapchain& swapchain, LogicalDevice& logicaldevice, DescriptorSetLayout& descriptorSetLayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
 	
 	VkPipeline vkGraphicsPipeline; // handle for entire graphics pipeline
 	VkPipelineLayout vkPipelineLayout; // handle for uniform shader variables in pipeline

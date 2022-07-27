@@ -41,7 +41,7 @@ bool PhysicalDevice::checkDeviceExtensionSupport() {
 }
 
 // Finds a graphics queue family (given a GPU)
-QueueFamilyIndices PhysicalDevice::findQueueFamilies(VkSurfaceKHR &surface) {
+QueueFamilyIndices PhysicalDevice::findQueueFamilies(Surface &surface) {
     QueueFamilyIndices indices;
 
     // get number of queue families supported by GPU
@@ -59,7 +59,7 @@ QueueFamilyIndices PhysicalDevice::findQueueFamilies(VkSurfaceKHR &surface) {
             indices.graphicsFamily = i;
         }
         VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface.vkSurface, &presentSupport);
         if (presentSupport) {
             indices.presentFamily = i;
         }
@@ -74,36 +74,36 @@ QueueFamilyIndices PhysicalDevice::findQueueFamilies(VkSurfaceKHR &surface) {
     return indices;
 }
 
-SwapChainSupportDetails PhysicalDevice::querySwapChainSupport(VkSurfaceKHR &surface) {
+SwapChainSupportDetails PhysicalDevice::querySwapChainSupport(Surface &surface) {
     // get basic window surface capabilities (min/max frames in swap chain, min/max width/height, etc.)
     // based on device and window surface
     SwapChainSupportDetails details;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &details.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface.vkSurface, &details.capabilities);
 
     // get number of window surface formats available (different color spaces/pixel formats)
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface.vkSurface, &formatCount, nullptr);
 
     // get the different available window surface formats
     if (formatCount != 0) {
         details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, details.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface.vkSurface, &formatCount, details.formats.data());
     }
 
     // get number of window surface presentation modes available
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface.vkSurface, &presentModeCount, nullptr);
 
     // get the different window surface presentation modes
     if (presentModeCount != 0) {
         details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, details.presentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface.vkSurface, &presentModeCount, details.presentModes.data());
     }
     return details;
 }
 
 // tests whether passed in GPU has the extensions/queue families we need
-bool PhysicalDevice::isDeviceSuitable(VkSurfaceKHR &surface) {
+bool PhysicalDevice::isDeviceSuitable(Surface &surface) {
     // gets GPU information (name, supported vulkan version, etc.)
     VkPhysicalDeviceProperties deviceProperties;
     vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
@@ -146,7 +146,7 @@ VkSampleCountFlagBits PhysicalDevice::getMaxUsableSampleCount() {
 }
 
 // pick the GPU we will use
-void PhysicalDevice::pickPhysicalDevice(VkInstance& instance, VkSurfaceKHR &surface, VkSampleCountFlagBits &msaaSamples) {
+void PhysicalDevice::pickPhysicalDevice(VkInstance& instance, Surface &surface, VkSampleCountFlagBits &msaaSamples) {
     // gets number of GPUs available
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);

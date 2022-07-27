@@ -15,6 +15,8 @@
 
 #include "physicaldevice.h"
 #include "logicaldevice.h"
+#include "commandpool.h"
+#include "databuffer.h"
 
 class Texture : Image {
 public:
@@ -22,9 +24,9 @@ public:
 	~Texture();
 
 	// creates a texture from an image
-	void createTextureImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, VkCommandPool& commandPool);
+	void createTextureImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool);
 	// generates mip maps of a source image
-	void generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, VkCommandPool& commandPool);
+	void generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, CommandPool& commandpool);
 
 	void createTextureImageView(LogicalDevice& logicaldevice);
 

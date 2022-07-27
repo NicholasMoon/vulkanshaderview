@@ -9,6 +9,8 @@
 #include <iostream>
 #include <vector>
 
+#include "surface.h"
+
 #include "utils_vk.h"
 
 class PhysicalDevice {
@@ -20,18 +22,18 @@ public:
     bool checkDeviceExtensionSupport();
 
     // Finds a graphics queue family (given a GPU)
-    QueueFamilyIndices findQueueFamilies(VkSurfaceKHR& surface);
+    QueueFamilyIndices findQueueFamilies(Surface& surface);
 
-    SwapChainSupportDetails querySwapChainSupport(VkSurfaceKHR& surface);
+    SwapChainSupportDetails querySwapChainSupport(Surface& surface);
 
     // tests whether passed in GPU has the extensions/queue families we need
-    bool isDeviceSuitable(VkSurfaceKHR& surface);
+    bool isDeviceSuitable(Surface& surface);
 
     // get max msaa sample count supported by physical device
     VkSampleCountFlagBits getMaxUsableSampleCount();
 
     // pick the GPU we will use
-    void pickPhysicalDevice(VkInstance& instance, VkSurfaceKHR& surface, VkSampleCountFlagBits &msaaSamples);
+    void pickPhysicalDevice(VkInstance& instance, Surface& surface, VkSampleCountFlagBits &msaaSamples);
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE; // GPU
 

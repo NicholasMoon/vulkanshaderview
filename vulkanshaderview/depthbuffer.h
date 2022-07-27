@@ -14,6 +14,9 @@
 #include "physicaldevice.h"
 #include "logicaldevice.h"
 #include "swapchain.h"
+#include "commandpool.h"
+
+class Swapchain;
 
 class DepthBuffer : Image {
 public:
@@ -21,7 +24,7 @@ public:
 	~DepthBuffer();
 
 	// create vulkan structures related to depth buffer
-	void createDepthResources(Swapchain& swapchain, VkSampleCountFlagBits msaaSamples, PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, VkCommandPool& commandPool);
+	void createDepthResources(Swapchain& swapchain, VkSampleCountFlagBits msaaSamples, PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, CommandPool& commandpool);
 
 	// find best format for depth buffer
 	VkFormat findDepthFormat(PhysicalDevice& physicaldevice);

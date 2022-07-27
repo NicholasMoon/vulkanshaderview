@@ -10,6 +10,7 @@
 #include "logicaldevice.h"
 
 #include "commandbuffer.h"
+#include "commandpool.h"
 
 class Image {
 public:
@@ -19,10 +20,10 @@ public:
 	// create vulkan image
 	void createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
-	void copyBufferToImage(VkBuffer buffer, VkCommandPool& commandPool, LogicalDevice& logicaldevice);
+	void copyBufferToImage(VkBuffer buffer, CommandPool& commandpool, LogicalDevice& logicaldevice);
 
 	// function to synchronize transition between staging buffer and vulkan image
-	void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, VkCommandPool& commandPool, LogicalDevice& logicaldevice);
+	void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, CommandPool& commandpool, LogicalDevice& logicaldevice);
 
 	// creates an image view
 	VkImageView createImageView(uint32_t mipLevels, LogicalDevice& logicaldevice);

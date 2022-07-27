@@ -1,7 +1,12 @@
 #include "myVK.h"
 
 
-MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(), texture(), depthbuffer(), msaabuffer(), graphicspipeline() {}
+MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(), 
+               texture(), depthbuffer(), msaabuffer(), descriptorpool(), descriptorsets(), descriptorsetlayout(), commandpool(),
+               graphicspipeline(), renderpass(), vertexbuffer(), indexbuffer()
+{
+
+}
 
 MyVK::~MyVK() {}
 
@@ -11,8 +16,6 @@ void MyVK::run() {
     mainLoop();
     cleanup();
 }
-
-
 
 // init glfw window
 void MyVK::initWindow() {
@@ -27,146 +30,13 @@ void MyVK::initWindow() {
 
 
 
-// creates window surface
-void MyVK::createSurface() {
-    if (glfwCreateWindowSurface(vulkaninstance.instance, window, nullptr, &surface) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create window surface!");
-    }
-}
-
-
-
-
-
-void MyVK::createRenderPass() {
-    // color attachment info
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapchain.vkSwapChainImageFormat;
-    colorAttachment.samples = msaabuffer.msaaSamples; // for msaa
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // cant present msaa directly
-
-    // depth buffer attachment info
-    VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = depthbuffer.findDepthFormat(physicaldevice);
-    depthAttachment.samples = msaabuffer.msaaSamples; // for msaa
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    // reference to a color attachment
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // reference to depth buffer attachment
-    VkAttachmentReference depthAttachmentRef{};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    // resolve msaa buffer to presentable swapchain image
-    VkAttachmentDescription colorAttachmentResolve{};
-    colorAttachmentResolve.format = swapchain.vkSwapChainImageFormat;
-    colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    // reference to msaa->swapchain resolve attachment
-    VkAttachmentReference colorAttachmentResolveRef{};
-    colorAttachmentResolveRef.attachment = 2;
-    colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // render subpass options
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-    subpass.pResolveAttachments = &colorAttachmentResolveRef;
-
-    std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
-
-    // subpass dependencies
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcAccessMask = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-    // create render pass
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-    renderPassInfo.pAttachments = attachments.data();
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    if (vkCreateRenderPass(logicaldevice.device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create render pass!");
-    }
-}
-
-// create framebuffers associated with entries in swapchain
-void MyVK::createFramebuffers() {
-    swapChainFramebuffers.resize(swapchain.vkSwapChainImages.size());
-
-    for (size_t i = 0; i < swapchain.vkSwapChainImages.size(); i++) {
-        std::array<VkImageView, 3> attachments = {
-            msaabuffer.get_vkImageView(),
-            depthbuffer.get_vkImageView(),
-            swapchain.vkSwapChainImageViews[i]
-        };
-
-        VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-        framebufferInfo.pAttachments = attachments.data();
-        framebufferInfo.width = swapchain.vkSwapChainExtent.width;
-        framebufferInfo.height = swapchain.vkSwapChainExtent.height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(logicaldevice.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create framebuffer!");
-        }
-    }
-}
-
-// creates the vulkan command pool
-void MyVK::createCommandPool() {
-    QueueFamilyIndices queueFamilyIndices = physicaldevice.findQueueFamilies(surface);
-
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // reset every frame
-    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value(); // for graphics commands
-
-    if (vkCreateCommandPool(logicaldevice.device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create command pool!");
-    }
-}
 // creates a vulkan command pool
 void MyVK::createCommandBuffers() {
     commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = commandpool.vkCommandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
@@ -190,8 +60,8 @@ void MyVK::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageInde
     // start render pass
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+    renderPassInfo.renderPass = renderpass.vkRenderPass;
+    renderPassInfo.framebuffer = swapchain.vkSwapChainFramebuffers[imageIndex].vkFramebuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = swapchain.vkSwapChainExtent;
 
@@ -206,13 +76,13 @@ void MyVK::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageInde
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkGraphicsPipeline);
 
-    VkBuffer vertexBuffers[] = { vertexBuffer };
+    VkBuffer vertexBuffers[] = { vertexbuffer.vkBuffer };
     VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(commandBuffer, indexbuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkPipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkPipelineLayout, 0, 1, &descriptorsets.vkDescriptorSets[currentFrame], 0, nullptr);
 
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(myMesh->indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
 
@@ -248,162 +118,13 @@ void MyVK::createSyncObjects() {
     }
 }
 
-// copies memory from one buffer to another
-void MyVK::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, logicaldevice);
-
-    VkBufferCopy copyRegion{};
-    copyRegion.size = size;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-    endSingleTimeCommands(commandBuffer, commandPool, logicaldevice);
-}
-
-// creates vertex buffer to store vert data
-void MyVK::createVertexBuffer() {
-    VkDeviceSize bufferSize = sizeof(myMesh->vertices[0]) * myMesh->vertices.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, logicaldevice, physicaldevice);
-
-    void* data;
-    vkMapMemory(logicaldevice.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, myMesh->vertices.data(), (size_t)bufferSize);
-    vkUnmapMemory(logicaldevice.device, stagingBufferMemory);
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, logicaldevice, physicaldevice);
-
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
-    vkDestroyBuffer(logicaldevice.device, stagingBuffer, nullptr);
-    vkFreeMemory(logicaldevice.device, stagingBufferMemory, nullptr);
-}
-
-// creates index buffer to store vert index data
-void MyVK::createIndexBuffer() {
-    VkDeviceSize bufferSize = sizeof(myMesh->indices[0]) * myMesh->indices.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, logicaldevice, physicaldevice);
-
-    void* data;
-    vkMapMemory(logicaldevice.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, myMesh->indices.data(), (size_t)bufferSize);
-    vkUnmapMemory(logicaldevice.device, stagingBufferMemory);
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, logicaldevice, physicaldevice);
-
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-    vkDestroyBuffer(logicaldevice.device, stagingBuffer, nullptr);
-    vkFreeMemory(logicaldevice.device, stagingBufferMemory, nullptr);
-}
-
-// create uniform buffer and texture sampler descriptors
-void MyVK::createDescriptorSetLayout() {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
-
-    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-    layoutInfo.pBindings = bindings.data();
-
-    if (vkCreateDescriptorSetLayout(logicaldevice.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create descriptor set layout!");
-    }
-}
-
 // create buffers for the uniform variables (one for each frame in flight)
 void MyVK::createUniformBuffers() {
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    uniformbuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i], logicaldevice, physicaldevice);
-    }
-}
-
-// create a descriptor pool for the descriptor sets of uniform buffers and texture samplers
-void MyVK::createDescriptorPool() {
-    std::array<VkDescriptorPoolSize, 2> poolSizes{};
-    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-    VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-    poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-    if (vkCreateDescriptorPool(logicaldevice.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create descriptor pool!");
-    }
-}
-
-void MyVK::createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-    allocInfo.pSetLayouts = layouts.data();
-
-    // allocate memory for descriptor sets
-    descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(logicaldevice.device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate descriptor sets!");
-    }
-
-    // fill descriptor sets with info of buffers
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = uniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
-
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = texture.get_vkImageView();
-        imageInfo.sampler = texture.vkTextureSampler;
-
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-
-        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[0].dstSet = descriptorSets[i];
-        descriptorWrites[0].dstBinding = 0;
-        descriptorWrites[0].dstArrayElement = 0;
-        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrites[0].descriptorCount = 1;
-        descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[1].dstSet = descriptorSets[i];
-        descriptorWrites[1].dstBinding = 1;
-        descriptorWrites[1].dstArrayElement = 0;
-        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pImageInfo = &imageInfo;
-
-        vkUpdateDescriptorSets(logicaldevice.device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        uniformbuffers[i].createUniformBuffer(logicaldevice, physicaldevice);
     }
 }
 
@@ -425,7 +146,7 @@ void MyVK::createLogicalDevice() {
 void MyVK::initVulkan() {
     vulkaninstance.createInstance();
     vulkaninstance.setupDebugMessenger();
-    createSurface();
+    surface.createSurface(vulkaninstance, window);
     
     pickPhysicalDevice();
     
@@ -434,28 +155,28 @@ void MyVK::initVulkan() {
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
     
-    createRenderPass();
-    createDescriptorSetLayout();
-    graphicspipeline.createGraphicsPipeline(swapchain, logicaldevice, descriptorSetLayout, renderPass, msaabuffer);
-    createCommandPool();
+    renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
+    descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
+    graphicspipeline.createGraphicsPipeline(swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+    commandpool.createCommandPool(physicaldevice, logicaldevice, surface);
     
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
     
-    depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandPool);
+    depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
     
-    createFramebuffers();
+    swapchain.createFramebuffers(logicaldevice, renderpass, depthbuffer, msaabuffer);
 
-    texture.createTextureImage(TEXTURE_PATH, logicaldevice, physicaldevice, commandPool);
+    texture.createTextureImage(TEXTURE_PATH, logicaldevice, physicaldevice, commandpool);
     texture.createTextureImageView(logicaldevice);
     texture.createTextureSampler(logicaldevice, physicaldevice);
 
     loadModel();
 
-    createVertexBuffer();
-    createIndexBuffer();
+    vertexbuffer.createVertexBuffer(myMesh.get(), logicaldevice, physicaldevice, commandpool);
+    indexbuffer.createIndexBuffer(myMesh.get(), logicaldevice, physicaldevice, commandpool);
     createUniformBuffers();
-    createDescriptorPool();
-    createDescriptorSets();
+    descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
+    descriptorsets.createDescriptorSets(MAX_FRAMES_IN_FLIGHT, logicaldevice, descriptorpool, descriptorsetlayout, uniformbuffers, texture);
     createCommandBuffers();
     createSyncObjects();
 }
@@ -482,9 +203,9 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
     ubo.lightPos = glm::vec3(2 * sin(time) * sin(time), 2 * cos(time) * cos(time), 0.5);
 
     void* data;
-    vkMapMemory(logicaldevice.device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+    vkMapMemory(logicaldevice.device, uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(logicaldevice.device, uniformBuffersMemory[currentImage]);
+    vkUnmapMemory(logicaldevice.device, uniformbuffers[currentImage].vkBufferMemory);
 }
 
 void MyVK::drawFrame() {
@@ -549,8 +270,8 @@ void MyVK::drawFrame() {
     result = vkQueuePresentKHR(logicaldevice.presentQueue, &presentInfo);
 
     // check if swapchain needs to be recreated
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-        framebufferResized = false;
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || swapchain.framebufferResized) {
+        swapchain.framebufferResized = false;
         recreateSwapChain();
     }
     else if (result != VK_SUCCESS) {
@@ -573,8 +294,8 @@ void MyVK::cleanupSwapChain() {
     vkFreeMemory(logicaldevice.device, depthbuffer.get_vkImageMemory(), nullptr);
 
     // handle framebuffers
-    for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-        vkDestroyFramebuffer(logicaldevice.device, swapChainFramebuffers[i], nullptr);
+    for (size_t i = 0; i < swapchain.vkSwapChainFramebuffers.size(); i++) {
+        vkDestroyFramebuffer(logicaldevice.device, swapchain.vkSwapChainFramebuffers[i].vkFramebuffer, nullptr);
     }
 
     // handle graphics pipeline
@@ -584,7 +305,7 @@ void MyVK::cleanupSwapChain() {
     vkDestroyPipelineLayout(logicaldevice.device, graphicspipeline.vkPipelineLayout, nullptr);
 
     // handle render pass
-    vkDestroyRenderPass(logicaldevice.device, renderPass, nullptr);
+    vkDestroyRenderPass(logicaldevice.device, renderpass.vkRenderPass, nullptr);
 
     // handle image views
     for (size_t i = 0; i < swapchain.vkSwapChainImages.size(); i++) {
@@ -611,11 +332,11 @@ void MyVK::recreateSwapChain() {
 
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
-    createRenderPass();
-    graphicspipeline.createGraphicsPipeline(swapchain, logicaldevice, descriptorSetLayout, renderPass, msaabuffer);
+    renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
+    graphicspipeline.createGraphicsPipeline(swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
-    depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandPool);
-    createFramebuffers();
+    depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
+    swapchain.createFramebuffers(logicaldevice, renderpass, depthbuffer, msaabuffer);
 }
 
 void MyVK::mainLoop() {
@@ -644,27 +365,27 @@ void MyVK::cleanup() {
 
     // destroy uniform buffers and memory
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyBuffer(logicaldevice.device, uniformBuffers[i], nullptr);
-        vkFreeMemory(logicaldevice.device, uniformBuffersMemory[i], nullptr);
+        vkDestroyBuffer(logicaldevice.device, uniformbuffers[i].vkBuffer, nullptr);
+        vkFreeMemory(logicaldevice.device, uniformbuffers[i].vkBufferMemory, nullptr);
     }
 
     // handle descriptor pool/sets
-    vkDestroyDescriptorPool(logicaldevice.device, descriptorPool, nullptr);
+    vkDestroyDescriptorPool(logicaldevice.device, descriptorpool.vkDescriptorPool, nullptr);
 
     // destroy uniform descriptor
-    vkDestroyDescriptorSetLayout(logicaldevice.device, descriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(logicaldevice.device, descriptorsetlayout.vkDescriptorSetLayout, nullptr);
 
     // handle index buffer
-    vkDestroyBuffer(logicaldevice.device, indexBuffer, nullptr);
+    vkDestroyBuffer(logicaldevice.device, indexbuffer.vkBuffer, nullptr);
 
     // handle index buffer memory
-    vkFreeMemory(logicaldevice.device, indexBufferMemory, nullptr);
+    vkFreeMemory(logicaldevice.device, indexbuffer.vkBufferMemory, nullptr);
 
     // handle vert buffer
-    vkDestroyBuffer(logicaldevice.device, vertexBuffer, nullptr);
+    vkDestroyBuffer(logicaldevice.device, vertexbuffer.vkBuffer, nullptr);
 
     // free vert buffer memory
-    vkFreeMemory(logicaldevice.device, vertexBufferMemory, nullptr);
+    vkFreeMemory(logicaldevice.device, vertexbuffer.vkBufferMemory, nullptr);
 
     // handle semaphores and fences
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -674,7 +395,7 @@ void MyVK::cleanup() {
     }
 
     // handle command pool
-    vkDestroyCommandPool(logicaldevice.device, commandPool, nullptr);
+    vkDestroyCommandPool(logicaldevice.device, commandpool.vkCommandPool, nullptr);
 
     // handle logical device
     vkDestroyDevice(logicaldevice.device, nullptr);
@@ -685,7 +406,7 @@ void MyVK::cleanup() {
     }
 
     // handle window surface
-    vkDestroySurfaceKHR(vulkaninstance.instance, surface, nullptr);
+    vkDestroySurfaceKHR(vulkaninstance.instance, surface.vkSurface, nullptr);
 
     // handle vulkan instance
     vkDestroyInstance(vulkaninstance.instance, nullptr);

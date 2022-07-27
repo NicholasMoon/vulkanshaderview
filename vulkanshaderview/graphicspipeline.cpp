@@ -4,7 +4,7 @@ GraphicsPipeline::GraphicsPipeline() {}
 
 GraphicsPipeline::~GraphicsPipeline() {}
 
-void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevice &logicaldevice, VkDescriptorSetLayout &descriptorSetLayout, VkRenderPass &renderPass, MSAABuffer &msaabuffer) {
+void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevice &logicaldevice, DescriptorSetLayout &descriptorsetlayout, RenderPass& renderpass, MSAABuffer &msaabuffer) {
     // generate shader bytecode
     std::vector<char> vertShaderCode = readFile("shaders/vert.spv");
     std::vector<char> fragShaderCode = readFile("shaders/frag.spv");
@@ -129,7 +129,7 @@ void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevic
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+    pipelineLayoutInfo.pSetLayouts = &descriptorsetlayout.vkDescriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
     pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -164,7 +164,7 @@ void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevic
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = nullptr; // Optional
     pipelineInfo.layout = vkPipelineLayout;
-    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.renderPass = renderpass.vkRenderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineInfo.basePipelineIndex = -1; // Optional

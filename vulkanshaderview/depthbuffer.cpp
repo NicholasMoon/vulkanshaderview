@@ -5,7 +5,7 @@ DepthBuffer::DepthBuffer() {}
 DepthBuffer::~DepthBuffer() {}
 
 // create vulkan structures related to depth buffer
-void DepthBuffer::createDepthResources(Swapchain &swapchain, VkSampleCountFlagBits msaaSamples, PhysicalDevice& physicaldevice, LogicalDevice &logicaldevice, VkCommandPool& commandPool) {
+void DepthBuffer::createDepthResources(Swapchain &swapchain, VkSampleCountFlagBits msaaSamples, PhysicalDevice& physicaldevice, LogicalDevice &logicaldevice, CommandPool& commandpool) {
     width = swapchain.vkSwapChainExtent.width;
     height = swapchain.vkSwapChainExtent.height;
     vkTiling = VK_IMAGE_TILING_OPTIMAL;
@@ -19,7 +19,7 @@ void DepthBuffer::createDepthResources(Swapchain &swapchain, VkSampleCountFlagBi
     createImage(1, msaaSamples, logicaldevice, physicaldevice);
     vkImageView = createImageView(1, logicaldevice);
 
-    transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, commandPool, logicaldevice);
+    transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, commandpool, logicaldevice);
 }
 
 // find best format for depth buffer

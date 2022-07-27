@@ -11,6 +11,7 @@
 
 #include "utils_vk.h"
 #include "physicaldevice.h"
+#include "surface.h"
 
 class LogicalDevice {
 public:
@@ -20,7 +21,7 @@ public:
 
 
     // Create the logical device to interface with GPU
-    void createLogicalDevice(PhysicalDevice& physicaldevice, VkSurfaceKHR& surface);
+    void createLogicalDevice(PhysicalDevice& physicaldevice, Surface& surface);
 
     VkDevice device; // Logical Device
     VkQueue graphicsQueue; // Graphics Queue

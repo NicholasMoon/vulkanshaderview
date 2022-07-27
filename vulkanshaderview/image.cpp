@@ -42,8 +42,8 @@ void Image::createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, Lo
     vkBindImageMemory(logicaldevice.device, vkImage, vkImageMemory, 0);
 }
 
-void Image::copyBufferToImage(VkBuffer buffer, VkCommandPool& commandPool, LogicalDevice &logicaldevice) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, logicaldevice);
+void Image::copyBufferToImage(VkBuffer buffer, CommandPool& commandpool, LogicalDevice &logicaldevice) {
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandpool, logicaldevice);
 
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
@@ -71,12 +71,12 @@ void Image::copyBufferToImage(VkBuffer buffer, VkCommandPool& commandPool, Logic
         &region
     );
 
-    endSingleTimeCommands(commandBuffer, commandPool, logicaldevice);
+    endSingleTimeCommands(commandBuffer, commandpool, logicaldevice);
 }
 
 // function to synchronize transition between staging buffer and vulkan image
-void Image::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, VkCommandPool& commandPool, LogicalDevice &logicaldevice) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, logicaldevice);
+void Image::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, CommandPool& commandpool, LogicalDevice &logicaldevice) {
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandpool, logicaldevice);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -141,7 +141,7 @@ void Image::transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayo
         1, &barrier
     );
 
-    endSingleTimeCommands(commandBuffer, commandPool, logicaldevice);
+    endSingleTimeCommands(commandBuffer, commandpool, logicaldevice);
 }
 
 // creates an image view

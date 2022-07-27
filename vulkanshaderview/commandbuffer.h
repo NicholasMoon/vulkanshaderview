@@ -6,12 +6,10 @@
 
 #include "physicaldevice.h"
 #include "logicaldevice.h"
+#include "commandpool.h"
 
-// create a buffer and allocate memory
-void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
+VkCommandBuffer beginSingleTimeCommands(CommandPool& commandpool, LogicalDevice& logicaldevice);
 
-VkCommandBuffer beginSingleTimeCommands(VkCommandPool& commandPool, LogicalDevice& logicaldevice);
-
-void endSingleTimeCommands(VkCommandBuffer commandBuffer, VkCommandPool& commandPool, LogicalDevice& logicaldevice);
+void endSingleTimeCommands(VkCommandBuffer commandBuffer, CommandPool& commandpool, LogicalDevice& logicaldevice);
 
 #endif

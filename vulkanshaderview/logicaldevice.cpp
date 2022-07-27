@@ -5,7 +5,7 @@ LogicalDevice::LogicalDevice() {}
 LogicalDevice::~LogicalDevice() {}
 
 // Create the logical device to interface with GPU
-void LogicalDevice::createLogicalDevice(PhysicalDevice &physicaldevice, VkSurfaceKHR& surface) {
+void LogicalDevice::createLogicalDevice(PhysicalDevice &physicaldevice, Surface& surface) {
     QueueFamilyIndices indices = physicaldevice.findQueueFamilies(surface);
 
     // create set of union of all unique queue families

@@ -11,13 +11,22 @@
 
 #include "physicaldevice.h"
 #include "logicaldevice.h"
+#include "depthbuffer.h"
+#include "msaabuffer.h"
+#include "renderpass.h"
+#include "framebuffer.h"
+#include "surface.h"
+
+class RenderPass;
+class MSAABuffer;
+class DepthBuffer;
 
 class Swapchain {
 public:
 	Swapchain();
 	~Swapchain();
 
-    void createSwapChain(PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, VkSurfaceKHR& surface, GLFWwindow* window);
+    void createSwapChain(PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, Surface& surface, GLFWwindow* window);
     // chooses resolution of swap chain images (usually equal to glfw screen size)
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
     // chooses swapchain presentation mode (between FIFO, relaxed, immediate, and mailbox)
@@ -26,6 +35,8 @@ public:
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     void createImageViews(LogicalDevice& logicaldevice);
 
+    void createFramebuffers(LogicalDevice& logicaldevice, RenderPass& renderpass, DepthBuffer& depthbuffer, MSAABuffer& msaabuffer);
+
     VkSwapchainKHR vkSwapChain; // Vulkan Swapchain
     std::vector<VkImage> vkSwapChainImages; // Vector of images in the swapchain
     std::vector<VkImageView> vkSwapChainImageViews; // Vector of imageviews in the swapchain
@@ -33,6 +44,8 @@ public:
     VkExtent2D vkSwapChainExtent; // extent (resolution/pixels) of images in our swapchain
     VkImageAspectFlags vkSwapChainAspectFlags; // aspect flags for swapchain
 
+    std::vector<Framebuffer> vkSwapChainFramebuffers; // vector of framebuffers (for each entry in swapchain)
+    bool framebufferResized = false; // flag that swapchain needs to be resized
 private:
 
 };

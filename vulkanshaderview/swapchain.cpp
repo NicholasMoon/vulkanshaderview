@@ -5,7 +5,7 @@ Swapchain::Swapchain() {}
 Swapchain::~Swapchain() {}
 
 // creates the swap chain of images
-void Swapchain::createSwapChain(PhysicalDevice &physicaldevice, LogicalDevice &logicaldevice, VkSurfaceKHR &surface, GLFWwindow* window) {
+void Swapchain::createSwapChain(PhysicalDevice &physicaldevice, LogicalDevice &logicaldevice, Surface &surface, GLFWwindow* window) {
     // get most suitable swap chain
     SwapChainSupportDetails swapChainSupport = physicaldevice.querySwapChainSupport(surface);
     
@@ -25,7 +25,7 @@ void Swapchain::createSwapChain(PhysicalDevice &physicaldevice, LogicalDevice &l
     // swapchain creation info for vulkan
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface;
+    createInfo.surface = surface.vkSurface;
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -156,6 +156,33 @@ void Swapchain::createImageViews(LogicalDevice &logicaldevice) {
 
         if (vkCreateImageView(logicaldevice.device, &viewInfo, nullptr, &(vkSwapChainImageViews[i])) != VK_SUCCESS) {
             throw std::runtime_error("failed to create texture image view!");
+        }
+    }
+}
+
+// create framebuffers associated with entries in swapchain
+void Swapchain::createFramebuffers(LogicalDevice& logicaldevice, RenderPass& renderpass, DepthBuffer& depthbuffer, MSAABuffer& msaabuffer) {
+    vkSwapChainFramebuffers.resize(vkSwapChainImages.size());
+
+    for (size_t i = 0; i < vkSwapChainImages.size(); i++) {
+        //vkSwapChainFramebuffers[i].createFramebuffer(i, logicaldevice, *this, renderpass, depthbuffer, msaabuffer);
+        std::array<VkImageView, 3> attachments = {
+        msaabuffer.get_vkImageView(),
+        depthbuffer.get_vkImageView(),
+        vkSwapChainImageViews[i]
+        };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderpass.vkRenderPass;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        framebufferInfo.pAttachments = attachments.data();
+        framebufferInfo.width = vkSwapChainExtent.width;
+        framebufferInfo.height = vkSwapChainExtent.height;
+        framebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(logicaldevice.device, &framebufferInfo, nullptr, &(vkSwapChainFramebuffers[i].vkFramebuffer)) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create framebuffer!");
         }
     }
 }
