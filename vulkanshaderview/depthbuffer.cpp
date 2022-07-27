@@ -45,3 +45,9 @@ VkFormat DepthBuffer::findSupportedFormat(const std::vector<VkFormat>& candidate
 
     throw std::runtime_error("failed to find supported format!");
 }
+
+void DepthBuffer::destroyImage(LogicalDevice& logicaldevice) {
+    vkDestroyImageView(logicaldevice.device, vkImageView, nullptr);
+    vkDestroyImage(logicaldevice.device, vkImage, nullptr);
+    vkFreeMemory(logicaldevice.device, vkImageMemory, nullptr);
+}

@@ -3,10 +3,8 @@
 
 MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(), 
                texture(), depthbuffer(), msaabuffer(), descriptorpool(), descriptorsets(), descriptorsetlayout(), commandpool(),
-               graphicspipeline(), renderpass(), vertexbuffer(), indexbuffer()
-{
-
-}
+               graphicspipeline(), renderpass(), vertexbuffer(), indexbuffer() 
+{}
 
 MyVK::~MyVK() {}
 
@@ -26,71 +24,6 @@ void MyVK::initWindow() {
     window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-}
-
-
-
-// creates a vulkan command pool
-void MyVK::createCommandBuffers() {
-    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandpool.vkCommandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-
-    if (vkAllocateCommandBuffers(logicaldevice.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
-}
-
-// writes commands into the command buffer
-void MyVK::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-    // general begin recording information
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = 0; // Optional
-    beginInfo.pInheritanceInfo = nullptr; // Optional
-
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
-
-    // start render pass
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderpass.vkRenderPass;
-    renderPassInfo.framebuffer = swapchain.vkSwapChainFramebuffers[imageIndex].vkFramebuffer;
-    renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = swapchain.vkSwapChainExtent;
-
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-    clearValues[1].depthStencil = { 1.0f, 0 };
-
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
-
-    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkGraphicsPipeline);
-
-    VkBuffer vertexBuffers[] = { vertexbuffer.vkBuffer };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-    vkCmdBindIndexBuffer(commandBuffer, indexbuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkPipelineLayout, 0, 1, &descriptorsets.vkDescriptorSets[currentFrame], 0, nullptr);
-
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(myMesh->indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
-
-    vkCmdEndRenderPass(commandBuffer);
-
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-        throw std::runtime_error("failed to record command buffer!");
-    }
 }
 
 void MyVK::createSyncObjects() {
@@ -134,23 +67,15 @@ void MyVK::loadModel() {
     myMesh->loadOBJ(MODEL_PATH);
 }
 
-void MyVK::pickPhysicalDevice() {
-    physicaldevice.pickPhysicalDevice(vulkaninstance.instance, surface, msaabuffer.msaaSamples);
-}
-
-void MyVK::createLogicalDevice() {
-    logicaldevice.createLogicalDevice(physicaldevice, surface);
-}
-
 // vulkan initialization
 void MyVK::initVulkan() {
     vulkaninstance.createInstance();
     vulkaninstance.setupDebugMessenger();
     surface.createSurface(vulkaninstance, window);
     
-    pickPhysicalDevice();
+    physicaldevice.pickPhysicalDevice(vulkaninstance.instance, surface, msaabuffer.msaaSamples);
     
-    createLogicalDevice();
+    logicaldevice.createLogicalDevice(physicaldevice, surface);
     
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
@@ -177,7 +102,7 @@ void MyVK::initVulkan() {
     createUniformBuffers();
     descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
     descriptorsets.createDescriptorSets(MAX_FRAMES_IN_FLIGHT, logicaldevice, descriptorpool, descriptorsetlayout, uniformbuffers, texture);
-    createCommandBuffers();
+    commandpool.createCommandBuffers(MAX_FRAMES_IN_FLIGHT, logicaldevice);
     createSyncObjects();
 }
 
@@ -232,8 +157,8 @@ void MyVK::drawFrame() {
     updateUniformBuffer(currentFrame);
 
     // record command buffer
-    vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+    vkResetCommandBuffer(commandpool.vkCommandBuffers[currentFrame], 0);
+    renderpass.executeRenderPass(commandpool, currentFrame, imageIndex, swapchain, graphicspipeline, descriptorsets, vertexbuffer, indexbuffer, myMesh.get());
 
     // submit command buffer
     VkSubmitInfo submitInfo{};
@@ -245,7 +170,7 @@ void MyVK::drawFrame() {
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+    submitInfo.pCommandBuffers = &commandpool.vkCommandBuffers[currentFrame];
     VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -284,36 +209,19 @@ void MyVK::drawFrame() {
 // handle cleanup of swapchain parts
 void MyVK::cleanupSwapChain() {
     // handle msaa buffer
-    vkDestroyImageView(logicaldevice.device, msaabuffer.get_vkImageView(), nullptr);
-    vkDestroyImage(logicaldevice.device, msaabuffer.get_vkImage(), nullptr);
-    vkFreeMemory(logicaldevice.device, msaabuffer.get_vkImageMemory(), nullptr);
+    msaabuffer.destroyImage(logicaldevice);
 
     // handle depth buffers
-    vkDestroyImageView(logicaldevice.device, depthbuffer.get_vkImageView(), nullptr);
-    vkDestroyImage(logicaldevice.device, depthbuffer.get_vkImage(), nullptr);
-    vkFreeMemory(logicaldevice.device, depthbuffer.get_vkImageMemory(), nullptr);
-
-    // handle framebuffers
-    for (size_t i = 0; i < swapchain.vkSwapChainFramebuffers.size(); i++) {
-        vkDestroyFramebuffer(logicaldevice.device, swapchain.vkSwapChainFramebuffers[i].vkFramebuffer, nullptr);
-    }
+    depthbuffer.destroyImage(logicaldevice);
 
     // handle graphics pipeline
-    vkDestroyPipeline(logicaldevice.device, graphicspipeline.vkGraphicsPipeline, nullptr);
-
-    // handle uniform variables
-    vkDestroyPipelineLayout(logicaldevice.device, graphicspipeline.vkPipelineLayout, nullptr);
+    graphicspipeline.destroyGraphicsPipeline(logicaldevice);
 
     // handle render pass
-    vkDestroyRenderPass(logicaldevice.device, renderpass.vkRenderPass, nullptr);
+    renderpass.destroyRenderPass(logicaldevice);
 
-    // handle image views
-    for (size_t i = 0; i < swapchain.vkSwapChainImages.size(); i++) {
-        vkDestroyImageView(logicaldevice.device, swapchain.vkSwapChainImageViews[i], nullptr);
-    }
-
-    // handle swapchain
-    vkDestroySwapchainKHR(logicaldevice.device, swapchain.vkSwapChain, nullptr);
+    // handle swapchain (and framebuffers)
+    swapchain.destroySwapChain(logicaldevice);
 }
 
 // recreates parts of swapchain in response to trigger i.e. window resize
@@ -353,67 +261,26 @@ void MyVK::cleanup() {
     // handle swapchain components
     cleanupSwapChain();
 
-    // handle vulkan texture sampler
-    vkDestroySampler(logicaldevice.device, texture.vkTextureSampler, nullptr);
-
-    // handle vulkan texture image view
-    vkDestroyImageView(logicaldevice.device, texture.get_vkImageView(), nullptr);
-
-    // handle vulkan image used to store texture
-    vkDestroyImage(logicaldevice.device, texture.get_vkImage(), nullptr);
-    vkFreeMemory(logicaldevice.device, texture.get_vkImageMemory(), nullptr);
-
-    // destroy uniform buffers and memory
+    texture.destroyImage(logicaldevice);
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyBuffer(logicaldevice.device, uniformbuffers[i].vkBuffer, nullptr);
-        vkFreeMemory(logicaldevice.device, uniformbuffers[i].vkBufferMemory, nullptr);
+        uniformbuffers[i].destroyBuffer(logicaldevice);
     }
-
-    // handle descriptor pool/sets
-    vkDestroyDescriptorPool(logicaldevice.device, descriptorpool.vkDescriptorPool, nullptr);
-
-    // destroy uniform descriptor
-    vkDestroyDescriptorSetLayout(logicaldevice.device, descriptorsetlayout.vkDescriptorSetLayout, nullptr);
-
-    // handle index buffer
-    vkDestroyBuffer(logicaldevice.device, indexbuffer.vkBuffer, nullptr);
-
-    // handle index buffer memory
-    vkFreeMemory(logicaldevice.device, indexbuffer.vkBufferMemory, nullptr);
-
-    // handle vert buffer
-    vkDestroyBuffer(logicaldevice.device, vertexbuffer.vkBuffer, nullptr);
-
-    // free vert buffer memory
-    vkFreeMemory(logicaldevice.device, vertexbuffer.vkBufferMemory, nullptr);
-
-    // handle semaphores and fences
+    descriptorpool.destroyDescriptorPool(logicaldevice);
+    descriptorsetlayout.destroyDescriptorSetLayout(logicaldevice);
+    indexbuffer.destroyBuffer(logicaldevice);
+    vertexbuffer.destroyBuffer(logicaldevice);
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(logicaldevice.device, renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(logicaldevice.device, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(logicaldevice.device, inFlightFences[i], nullptr);
     }
-
-    // handle command pool
-    vkDestroyCommandPool(logicaldevice.device, commandpool.vkCommandPool, nullptr);
-
-    // handle logical device
-    vkDestroyDevice(logicaldevice.device, nullptr);
-
-    // handle debug messenger
+    commandpool.destroyCommandPool(logicaldevice);
+    logicaldevice.destroyLogicalDevice();
     if (vulkaninstance.enableValidationLayers) {
         DestroyDebugUtilsMessengerEXT(vulkaninstance.instance, vulkaninstance.debugMessenger, nullptr);
     }
-
-    // handle window surface
-    vkDestroySurfaceKHR(vulkaninstance.instance, surface.vkSurface, nullptr);
-
-    // handle vulkan instance
-    vkDestroyInstance(vulkaninstance.instance, nullptr);
-
-    // handle glfw window
+    surface.destroySurface(vulkaninstance);
+    vulkaninstance.destroyInstance();
     glfwDestroyWindow(window);
-
-    // handle glfw runtime
     glfwTerminate();
 }

@@ -30,6 +30,11 @@ public:
 
 	bool hasStencilComponent();
 
+	// destroys vulkan components related to Image
+	virtual void destroyImage(LogicalDevice& logicaldevice);
+
+
+
 
 	// Vulkan image-related objects
 	VkImage vkImage; // handle for vulkan image
@@ -43,7 +48,7 @@ public:
 	VkMemoryPropertyFlags vkMemoryPropertyFlags; // handle for image memory properties
 
 	uint32_t width, height, channels;
-	
+
 private:
 	
 };

@@ -32,6 +32,8 @@ public:
 	// copies memory from one buffer to another
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, LogicalDevice& logicaldevice, CommandPool& commandPool);
 
+	void destroyBuffer(LogicalDevice& logicaldevice);
+
 	VkBuffer vkBuffer; // handle for the vert buffer
 	VkDeviceMemory vkBufferMemory; // handle for vert memory buffer
 	VkDeviceSize vkBufferSize; // amount of bytes allocated to buffer

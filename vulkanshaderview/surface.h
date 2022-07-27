@@ -16,6 +16,8 @@ public:
 	// creates window surface
 	void createSurface(VulkanInstance& vulkaninstance, GLFWwindow* window);
 
+	void destroySurface(VulkanInstance& vulkaninstance);
+
 	VkSurfaceKHR vkSurface; // Window Surface
 private:
 

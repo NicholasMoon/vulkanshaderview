@@ -86,3 +86,47 @@ void RenderPass::createRenderPass(Swapchain &swapchain, PhysicalDevice &physical
         throw std::runtime_error("failed to create render pass!");
     }
 }
+
+// execute render pass and record command buffer
+void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, DescriptorSets& descriptorsets, DataBuffer& vertexbuffer, DataBuffer& indexbuffer, Mesh *myMesh) {
+    // start recording command buffer
+    commandpool.startRecordCommandBuffer(bufferIndex);
+
+    // start render pass
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = vkRenderPass;
+    renderPassInfo.framebuffer = swapchain.vkSwapChainFramebuffers[imageIndex].vkFramebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = swapchain.vkSwapChainExtent;
+
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandpool.vkCommandBuffers[bufferIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkGraphicsPipeline);
+
+    VkBuffer vertexBuffers[] = { vertexbuffer.vkBuffer };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(commandpool.vkCommandBuffers[bufferIndex], 0, 1, vertexBuffers, offsets);
+
+    vkCmdBindIndexBuffer(commandpool.vkCommandBuffers[bufferIndex], indexbuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+    vkCmdBindDescriptorSets(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkPipelineLayout, 0, 1, &descriptorsets.vkDescriptorSets[bufferIndex], 0, nullptr);
+
+    vkCmdDrawIndexed(commandpool.vkCommandBuffers[bufferIndex], static_cast<uint32_t>(myMesh->indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
+
+    vkCmdEndRenderPass(commandpool.vkCommandBuffers[bufferIndex]);
+
+    // end recording command buffer
+    commandpool.endRecordCommandBuffer(bufferIndex);
+}
+
+void RenderPass::destroyRenderPass(LogicalDevice& logicaldevice) {
+    vkDestroyRenderPass(logicaldevice.device, vkRenderPass, nullptr);
+}

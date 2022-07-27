@@ -26,6 +26,8 @@ public:
 	// check that requested validation layers are supported
 	bool checkValidationLayerSupport();
 
+	void destroyInstance();
+
 	VkInstance instance; // Vulkan Instance
 	VkDebugUtilsMessengerEXT debugMessenger; // Debug Messenger
 

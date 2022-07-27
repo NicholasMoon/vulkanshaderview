@@ -32,6 +32,9 @@ public:
 	// find supported image formats of the physical device
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, PhysicalDevice& physicaldevice);
 
+	// destroys vulkan components related to Image
+	virtual void destroyImage(LogicalDevice& logicaldevice);
+
 	VkImage get_vkImage() { return vkImage; }
 	VkDeviceMemory get_vkImageMemory() { return vkImageMemory; }
 	VkImageView get_vkImageView() { return vkImageView; }

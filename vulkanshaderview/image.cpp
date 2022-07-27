@@ -176,3 +176,9 @@ VkImageView Image::createImageView(uint32_t mipLevels, LogicalDevice& logicaldev
 bool Image::hasStencilComponent() {
     return vkFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || vkFormat == VK_FORMAT_D24_UNORM_S8_UINT;
 }
+
+void Image::destroyImage(LogicalDevice& logicaldevice) {
+    vkDestroyImageView(logicaldevice.device, vkImageView, nullptr);
+    vkDestroyImage(logicaldevice.device, vkImage, nullptr);
+    vkFreeMemory(logicaldevice.device, vkImageMemory, nullptr);
+}

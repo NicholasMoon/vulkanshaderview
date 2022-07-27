@@ -18,3 +18,9 @@ void MSAABuffer::createColorResources(Swapchain& swapchain, LogicalDevice &logic
     createImage(1, msaaSamples, logicaldevice, physicaldevice);
     vkImageView = createImageView(1, logicaldevice);
 }
+
+void MSAABuffer::destroyImage(LogicalDevice& logicaldevice) {
+    vkDestroyImageView(logicaldevice.device, vkImageView, nullptr);
+    vkDestroyImage(logicaldevice.device, vkImage, nullptr);
+    vkFreeMemory(logicaldevice.device, vkImageMemory, nullptr);
+}

@@ -186,3 +186,20 @@ void Swapchain::createFramebuffers(LogicalDevice& logicaldevice, RenderPass& ren
         }
     }
 }
+
+
+// destroy swapchain (also framebuffers and image views)
+void Swapchain::destroySwapChain(LogicalDevice& logicaldevice) {
+    // handle framebuffers
+    for (size_t i = 0; i < vkSwapChainFramebuffers.size(); i++) {
+        vkDestroyFramebuffer(logicaldevice.device, vkSwapChainFramebuffers[i].vkFramebuffer, nullptr);
+    }
+
+    // handle image views
+    for (size_t i = 0; i < vkSwapChainImages.size(); i++) {
+        vkDestroyImageView(logicaldevice.device, vkSwapChainImageViews[i], nullptr);
+    }
+
+    // handle swapchain
+    vkDestroySwapchainKHR(logicaldevice.device, vkSwapChain, nullptr);
+}

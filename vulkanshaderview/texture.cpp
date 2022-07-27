@@ -176,3 +176,10 @@ void Texture::createTextureSampler(LogicalDevice& logicaldevice, PhysicalDevice&
         throw std::runtime_error("failed to create texture sampler!");
     }
 }
+
+void Texture::destroyImage(LogicalDevice& logicaldevice) {
+    vkDestroySampler(logicaldevice.device, vkTextureSampler, nullptr);
+    vkDestroyImageView(logicaldevice.device, vkImageView, nullptr);
+    vkDestroyImage(logicaldevice.device, vkImage, nullptr);
+    vkFreeMemory(logicaldevice.device, vkImageMemory, nullptr);
+}

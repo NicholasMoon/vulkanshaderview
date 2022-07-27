@@ -22,3 +22,7 @@ void DescriptorPool::createDescriptorPool(LogicalDevice& logicaldevice, uint32_t
         throw std::runtime_error("failed to create descriptor pool!");
     }
 }
+
+void DescriptorPool::destroyDescriptorPool(LogicalDevice& logicaldevice) {
+    vkDestroyDescriptorPool(logicaldevice.device, vkDescriptorPool, nullptr);
+}

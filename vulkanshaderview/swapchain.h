@@ -37,6 +37,9 @@ public:
 
     void createFramebuffers(LogicalDevice& logicaldevice, RenderPass& renderpass, DepthBuffer& depthbuffer, MSAABuffer& msaabuffer);
 
+    // destroy swapchain (also framebuffers and image views)
+    void destroySwapChain(LogicalDevice& logicaldevice);
+
     VkSwapchainKHR vkSwapChain; // Vulkan Swapchain
     std::vector<VkImage> vkSwapChainImages; // Vector of images in the swapchain
     std::vector<VkImageView> vkSwapChainImageViews; // Vector of imageviews in the swapchain

@@ -33,6 +33,9 @@ public:
 	// create texture sampler used to access image texels in fragment shader
 	void createTextureSampler(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
+	// destroys vulkan components related to Image
+	virtual void destroyImage(LogicalDevice& logicaldevice);
+
 	uint32_t mipLevels;			// number of mip levels (calculated from width and height of image)
 	VkSampler vkTextureSampler;	// handle for texture sampler
 	std::string fileName;

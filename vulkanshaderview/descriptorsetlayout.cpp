@@ -30,3 +30,7 @@ void DescriptorSetLayout::createDescriptorSetLayout(LogicalDevice& logicaldevice
         throw std::runtime_error("failed to create descriptor set layout!");
     }
 }
+
+void DescriptorSetLayout::destroyDescriptorSetLayout(LogicalDevice& logicaldevice) {
+    vkDestroyDescriptorSetLayout(logicaldevice.device, vkDescriptorSetLayout, nullptr);
+}

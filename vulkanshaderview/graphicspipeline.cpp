@@ -179,6 +179,12 @@ void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevic
     vkDestroyShaderModule(logicaldevice.device, vertShaderModule, nullptr);
 }
 
+// destroy graphics pipeline and pipeline layout (uniform variables)
+void GraphicsPipeline::destroyGraphicsPipeline(LogicalDevice& logicaldevice) {
+    vkDestroyPipelineLayout(logicaldevice.device, vkPipelineLayout, nullptr);
+    vkDestroyPipeline(logicaldevice.device, vkGraphicsPipeline, nullptr);
+}
+
 // creates a shader module out of a shader in a bytecode array
 VkShaderModule createShaderModule(const std::vector<char>& code, LogicalDevice &logicaldevice) {
     VkShaderModuleCreateInfo createInfo{};

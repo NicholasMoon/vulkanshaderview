@@ -59,3 +59,7 @@ void LogicalDevice::createLogicalDevice(PhysicalDevice &physicaldevice, Surface&
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 
 }
+
+void LogicalDevice::destroyLogicalDevice() {
+    vkDestroyDevice(device, nullptr);
+}

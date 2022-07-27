@@ -70,10 +70,6 @@ public:
     std::string MODEL_PATH = "models/sphere.obj";
     const std::string TEXTURE_PATH = "textures/wf.png";
 
-
-
-    
-
 private:
     GLFWwindow*                     window;
     VulkanInstance                  vulkaninstance;
@@ -96,8 +92,7 @@ private:
 
 
     std::unique_ptr<Mesh> myMesh;
-    
-    std::vector<VkCommandBuffer> commandBuffers; // handle for vulkan command buffer
+      
     std::vector<VkSemaphore> imageAvailableSemaphores; // GPU semaphore - image retrieved from swapchain and ready for rendering
     std::vector<VkSemaphore> renderFinishedSemaphores; // GPU semaphore - rendering finished and can present image
     std::vector<VkFence> inFlightFences; // CPU-GPU fence - make sure only 1 frame renders at a time
@@ -111,18 +106,6 @@ private:
 
     // init glfw window
     void initWindow();
-
-    // pick the GPU we will use
-    void pickPhysicalDevice();
-
-    // Create the logical device to interface with GPU
-    void createLogicalDevice();
-
-    // creates a vulkan command pool
-    void createCommandBuffers();
-
-    // writes commands into the command buffer
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
     void createSyncObjects();
 

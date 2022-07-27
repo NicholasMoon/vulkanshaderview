@@ -23,6 +23,8 @@ public:
     // Create the logical device to interface with GPU
     void createLogicalDevice(PhysicalDevice& physicaldevice, Surface& surface);
 
+    void destroyLogicalDevice();
+
     VkDevice device; // Logical Device
     VkQueue graphicsQueue; // Graphics Queue
     VkQueue presentQueue; // Window Surface Queue

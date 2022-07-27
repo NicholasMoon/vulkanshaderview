@@ -17,6 +17,9 @@
 #include "descriptorsetlayout.h"
 #include "vertex.h"
 
+class RenderPass;
+class MSAABuffer;
+
 class GraphicsPipeline {
 public:
 	GraphicsPipeline();
@@ -24,6 +27,8 @@ public:
 
 	void createGraphicsPipeline(Swapchain& swapchain, LogicalDevice& logicaldevice, DescriptorSetLayout& descriptorSetLayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
 	
+	void destroyGraphicsPipeline(LogicalDevice& logicaldevice);
+
 	VkPipeline vkGraphicsPipeline; // handle for entire graphics pipeline
 	VkPipelineLayout vkPipelineLayout; // handle for uniform shader variables in pipeline
 

@@ -20,6 +20,8 @@ public:
 	// create a descriptor pool for the descriptor sets of uniform buffers and texture samplers
 	void createDescriptorPool(LogicalDevice& logicaldevice, uint32_t maxFramesinFlight);
 
+	void destroyDescriptorPool(LogicalDevice& logicaldevice);
+
 	VkDescriptorPool vkDescriptorPool; // pool of descriptor sets
 
 private:

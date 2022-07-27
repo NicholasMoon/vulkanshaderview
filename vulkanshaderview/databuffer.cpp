@@ -92,3 +92,10 @@ void DataBuffer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize
 
     endSingleTimeCommands(commandBuffer, commandpool, logicaldevice);
 }
+
+void DataBuffer::destroyBuffer(LogicalDevice& logicaldevice) {
+    // free buffer handle
+    vkDestroyBuffer(logicaldevice.device, vkBuffer, nullptr);
+    // free  buffer memory
+    vkFreeMemory(logicaldevice.device, vkBufferMemory, nullptr);
+}

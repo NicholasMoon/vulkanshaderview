@@ -25,6 +25,9 @@ public:
 	// create image resources for msaa buffer
 	void createColorResources(Swapchain& swapchain, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
+	// destroys vulkan components related to Image
+	virtual void destroyImage(LogicalDevice& logicaldevice);
+
 	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT; // max supported msaa samples
 
 	VkImage get_vkImage() { return vkImage; }

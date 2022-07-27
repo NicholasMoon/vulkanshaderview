@@ -180,3 +180,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     // NOTE: only return true to test validation layers themselves
     return VK_FALSE;
 }
+
+void VulkanInstance::destroyInstance() {
+    vkDestroyInstance(instance, nullptr);
+}
