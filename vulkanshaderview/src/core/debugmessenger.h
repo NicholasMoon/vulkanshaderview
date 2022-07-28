@@ -1,5 +1,0 @@
-#ifndef DEBUGMESSENGER_H
-#define DEBUGMESSENGER_H
-
-
-#endif
