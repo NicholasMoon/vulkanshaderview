@@ -79,7 +79,7 @@ void MyVK::initVulkan() {
     
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
-    
+
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
     descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
     graphicspipeline.createGraphicsPipeline(swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
@@ -91,6 +91,55 @@ void MyVK::initVulkan() {
     
     swapchain.createFramebuffers(logicaldevice, renderpass, depthbuffer, msaabuffer);
 
+    descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Imgui setup begin
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Create Imgui renderpass
+    renderpass_imgui.createImGuiRenderPass(swapchain, physicaldevice, logicaldevice);
+    commandpool_imgui.createCommandPool(physicaldevice, logicaldevice, surface);
+    commandpool_imgui.createCommandBuffers(swapchain.vkSwapChainFramebuffers.size(), logicaldevice);
+    framebuffers_imgui.resize(swapchain.vkSwapChainImageViews.size());
+    for (int j = 0; j < swapchain.vkSwapChainImageViews.size(); ++j) {
+        framebuffers_imgui[j].createFrameBufferImGui(j, logicaldevice, swapchain, renderpass_imgui);
+    }
+    
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForVulkan(window, true);
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = vulkaninstance.instance;
+    init_info.PhysicalDevice = physicaldevice.physicalDevice;
+    init_info.Device = logicaldevice.device;
+    init_info.QueueFamily = physicaldevice.findQueueFamilies(surface).graphicsFamily.value();
+    init_info.Queue = logicaldevice.graphicsQueue;
+    init_info.PipelineCache = VK_NULL_HANDLE;
+    init_info.DescriptorPool = descriptorpool.vkDescriptorPool;
+    init_info.Subpass = 0;
+    init_info.MinImageCount = swapchain.minimumframebuffers;
+    init_info.ImageCount = swapchain.vkSwapChainImageViews.size();
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.Allocator = nullptr;
+    init_info.CheckVkResultFn = check_vk_result;
+    ImGui_ImplVulkan_Init(&init_info, renderpass_imgui.vkRenderPass);
+
+    VkCommandBuffer commandbuffer_imgui = beginSingleTimeCommands(commandpool_imgui, logicaldevice);
+    ImGui_ImplVulkan_CreateFontsTexture(commandbuffer_imgui);
+    endSingleTimeCommands(commandbuffer_imgui, commandpool_imgui, logicaldevice);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Imgui setup end
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     texture.createTextureImage(TEXTURE_PATH, logicaldevice, physicaldevice, commandpool);
     texture.createTextureImageView(logicaldevice);
     texture.createTextureSampler(logicaldevice, physicaldevice);
@@ -100,7 +149,6 @@ void MyVK::initVulkan() {
     vertexbuffer.createVertexBuffer(myMesh.get(), logicaldevice, physicaldevice, commandpool);
     indexbuffer.createIndexBuffer(myMesh.get(), logicaldevice, physicaldevice, commandpool);
     createUniformBuffers();
-    descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
     descriptorsets.createDescriptorSets(MAX_FRAMES_IN_FLIGHT, logicaldevice, descriptorpool, descriptorsetlayout, uniformbuffers, texture);
     commandpool.createCommandBuffers(MAX_FRAMES_IN_FLIGHT, logicaldevice);
     createSyncObjects();
@@ -160,6 +208,21 @@ void MyVK::drawFrame() {
     vkResetCommandBuffer(commandpool.vkCommandBuffers[currentFrame], 0);
     renderpass.executeRenderPass(commandpool, currentFrame, imageIndex, swapchain, graphicspipeline, descriptorsets, vertexbuffer, indexbuffer, myMesh.get());
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Imgui render code begin
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    vkResetCommandBuffer(commandpool_imgui.vkCommandBuffers[currentFrame], 0);
+    renderpass_imgui.executeImguiRenderPass(commandpool_imgui, currentFrame, imageIndex, swapchain, graphicspipeline, framebuffers_imgui);
+
+    // create a combination of normal rendering and imgui rendering command buffers
+    std::array<VkCommandBuffer, 2> submitCommandBuffers =
+    { commandpool.vkCommandBuffers[currentFrame], commandpool_imgui.vkCommandBuffers[currentFrame] };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Imgui render code end
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     // submit command buffer
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -169,8 +232,8 @@ void MyVK::drawFrame() {
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandpool.vkCommandBuffers[currentFrame];
+    submitInfo.commandBufferCount = static_cast<uint32_t>(submitCommandBuffers.size());
+    submitInfo.pCommandBuffers = submitCommandBuffers.data();
     VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -220,6 +283,13 @@ void MyVK::cleanupSwapChain() {
     // handle render pass
     renderpass.destroyRenderPass(logicaldevice);
 
+    // imgui stuff
+    renderpass_imgui.destroyRenderPass(logicaldevice);
+
+    for (int j = 0; j < framebuffers_imgui.size(); ++j) {
+        framebuffers_imgui[j].destroyFrameBufferImGui(logicaldevice);
+    }
+
     // handle swapchain (and framebuffers)
     swapchain.destroySwapChain(logicaldevice);
 }
@@ -245,12 +315,29 @@ void MyVK::recreateSwapChain() {
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
     swapchain.createFramebuffers(logicaldevice, renderpass, depthbuffer, msaabuffer);
+
+    renderpass_imgui.createImGuiRenderPass(swapchain, physicaldevice, logicaldevice);
+    framebuffers_imgui.resize(swapchain.vkSwapChainImageViews.size());
+    for (int j = 0; j < swapchain.vkSwapChainImageViews.size(); ++j) {
+        framebuffers_imgui[j].createFrameBufferImGui(j, logicaldevice, swapchain, renderpass_imgui);
+    }
+
+    ImGui_ImplVulkan_SetMinImageCount(swapchain.minimumframebuffers);
 }
 
 void MyVK::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow();
+        ImGui::Render();
+
         drawFrame();
+
+        
     }
 
     vkDeviceWaitIdle(logicaldevice.device);
@@ -260,6 +347,12 @@ void MyVK::mainLoop() {
 void MyVK::cleanup() {
     // handle swapchain components
     cleanupSwapChain();
+
+    // handle imgui
+    commandpool_imgui.destroyCommandPool(logicaldevice);
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     texture.destroyImage(logicaldevice);
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

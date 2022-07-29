@@ -12,6 +12,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imstb_rectpack.h"
+#include "imstb_textedit.h"
+#include "imstb_truetype.h"
+#include "imconfig.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -54,6 +63,15 @@
 #include "vertex.h"
 #include "ubo.h"
 
+static void check_vk_result(VkResult err)
+{
+    if (err == 0)
+        return;
+    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+    if (err < 0)
+        abort();
+}
+
 
 class MyVK {
 
@@ -69,6 +87,8 @@ public:
 
     std::string MODEL_PATH = "../models/sphere.obj";
     const std::string TEXTURE_PATH = "../textures/wf.png";
+
+    
 
 private:
     GLFWwindow*                     window;
@@ -89,6 +109,10 @@ private:
     DataBuffer                      vertexbuffer;
     DataBuffer                      indexbuffer;
     std::vector<DataBuffer>         uniformbuffers;
+
+    CommandPool                     commandpool_imgui;
+    RenderPass                      renderpass_imgui;
+    std::vector<Framebuffer>        framebuffers_imgui;
 
 
     std::unique_ptr<Mesh> myMesh;

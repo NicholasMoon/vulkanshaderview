@@ -51,6 +51,7 @@ void CommandPool::endRecordCommandBuffer(uint32_t bufferIndex) {
     }
 }
 
+// also handles command buffers allocated to pool
 void CommandPool::destroyCommandPool(LogicalDevice& logicaldevice) {
     vkDestroyCommandPool(logicaldevice.device, vkCommandPool, nullptr);
 }

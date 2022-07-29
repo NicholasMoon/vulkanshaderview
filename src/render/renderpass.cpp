@@ -37,7 +37,7 @@ void RenderPass::createRenderPass(Swapchain &swapchain, PhysicalDevice &physical
     depthAttachmentRef.attachment = 1;
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    // resolve msaa buffer to presentable swapchain image
+    // resolve msaa buffer to presentable swapchain image EDIT FOR IMGUI: Set to color attachment optimal for imgui postprocess rendering stage
     VkAttachmentDescription colorAttachmentResolve{};
     colorAttachmentResolve.format = swapchain.vkSwapChainImageFormat;
     colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -46,7 +46,8 @@ void RenderPass::createRenderPass(Swapchain &swapchain, PhysicalDevice &physical
     colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // PRESENT_SRC_KHR changed to COLOR_ATTACHMENT_OPTIMAL
+    //colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     // reference to msaa->swapchain resolve attachment
     VkAttachmentReference colorAttachmentResolveRef{};
@@ -124,6 +125,79 @@ void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferInde
     vkCmdEndRenderPass(commandpool.vkCommandBuffers[bufferIndex]);
 
     // end recording command buffer
+    commandpool.endRecordCommandBuffer(bufferIndex);
+}
+
+// render pass specifically for ImGui
+void RenderPass::createImGuiRenderPass(Swapchain& swapchain, PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice) {
+    // color attachment info
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format = swapchain.vkSwapChainImageFormat;
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // draw over main rendering
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    // reference to a color attachment
+    VkAttachmentReference colorAttachmentRef{};
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // render subpass options
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentRef;
+
+    // subpass dependencies
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    // create render pass
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachment;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
+
+    if (vkCreateRenderPass(logicaldevice.device, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create ImGui render pass!");
+    }
+}
+
+void RenderPass::executeImguiRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, std::vector<Framebuffer>& framebuffers) {
+    // start recording command buffer
+    commandpool.startRecordCommandBuffer(bufferIndex);
+    
+    std::array<VkClearValue, 1> clearValues{};
+    clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    
+    VkRenderPassBeginInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    info.renderPass = vkRenderPass;
+    info.framebuffer = framebuffers[imageIndex].vkFramebuffer;
+    info.renderArea.offset = { 0, 0 };
+    info.renderArea.extent = swapchain.vkSwapChainExtent;
+    info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    info.pClearValues = clearValues.data();
+    vkCmdBeginRenderPass(commandpool.vkCommandBuffers[bufferIndex], &info, VK_SUBPASS_CONTENTS_INLINE);
+
+    // Record Imgui Draw Data and draw funcs into command buffer
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandpool.vkCommandBuffers[bufferIndex]);
+
+    vkCmdEndRenderPass(commandpool.vkCommandBuffers[bufferIndex]);
+
     commandpool.endRecordCommandBuffer(bufferIndex);
 }
 

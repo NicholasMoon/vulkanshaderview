@@ -21,6 +21,8 @@ void Swapchain::createSwapChain(PhysicalDevice &physicaldevice, LogicalDevice &l
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
+    
+    minimumframebuffers = imageCount;
 
     // swapchain creation info for vulkan
     VkSwapchainCreateInfoKHR createInfo{};
@@ -78,6 +80,7 @@ void Swapchain::createSwapChain(PhysicalDevice &physicaldevice, LogicalDevice &l
     vkSwapChainImageFormat = surfaceFormat.format;
     vkSwapChainExtent = extent;
     vkSwapChainAspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+    
 }
 
 // chooses swapchain surface format (color depth, color space, image resolution, etc.)
@@ -165,7 +168,6 @@ void Swapchain::createFramebuffers(LogicalDevice& logicaldevice, RenderPass& ren
     vkSwapChainFramebuffers.resize(vkSwapChainImages.size());
 
     for (size_t i = 0; i < vkSwapChainImages.size(); i++) {
-        //vkSwapChainFramebuffers[i].createFramebuffer(i, logicaldevice, *this, renderpass, depthbuffer, msaabuffer);
         std::array<VkImageView, 3> attachments = {
         msaabuffer.get_vkImageView(),
         depthbuffer.get_vkImageView(),

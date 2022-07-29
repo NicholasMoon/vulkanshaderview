@@ -48,6 +48,7 @@ public:
     VkImageAspectFlags vkSwapChainAspectFlags; // aspect flags for swapchain
 
     std::vector<Framebuffer> vkSwapChainFramebuffers; // vector of framebuffers (for each entry in swapchain)
+    uint32_t minimumframebuffers = 2;
     bool framebufferResized = false; // flag that swapchain needs to be resized
 private:
 
