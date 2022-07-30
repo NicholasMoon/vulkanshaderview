@@ -14,7 +14,11 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
     alignas(16) glm::mat4 modelInvTr;
-    alignas(4)  glm::vec3 lightPos;
+    alignas(16) glm::vec4 camPos;
+    alignas(16) glm::vec4 lightPos;
+    alignas(16) glm::vec4 lightCol;
+    alignas(4)  glm::float32 metallic;
+    alignas(4)  glm::float32 roughness;
 };
 
 #endif

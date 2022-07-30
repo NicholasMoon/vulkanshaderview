@@ -6,8 +6,8 @@ GraphicsPipeline::~GraphicsPipeline() {}
 
 void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevice &logicaldevice, DescriptorSetLayout &descriptorsetlayout, RenderPass& renderpass, MSAABuffer &msaabuffer) {
     // generate shader bytecode
-    std::vector<char> vertShaderCode = readFile("../shaders/vert.spv");
-    std::vector<char> fragShaderCode = readFile("../shaders/frag.spv");
+    std::vector<char> vertShaderCode = readFile("../shaders/vertshader.spv");
+    std::vector<char> fragShaderCode = readFile("../shaders/pbr.spv");
 
     // create shader modules for our vert and frag shader bytecode
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode, logicaldevice);

@@ -58,19 +58,13 @@
 #include "databuffer/databuffer.h"
 #include "core/commandpool.h"
 #include "core/surface.h"
+#include "gui/gui.h"
 
 #include "scene/mesh.h"
 #include "vertex.h"
 #include "ubo.h"
 
-static void check_vk_result(VkResult err)
-{
-    if (err == 0)
-        return;
-    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-    if (err < 0)
-        abort();
-}
+
 
 
 class MyVK {
@@ -80,13 +74,13 @@ public:
     ~MyVK();
     void run();
 
-    const uint32_t WIDTH = 800;
-    const uint32_t HEIGHT = 600;
+    const uint32_t WIDTH = 1280;
+    const uint32_t HEIGHT = 720;
     const int MAX_FRAMES_IN_FLIGHT = 2; 
     uint32_t currentFrame = 0;
 
     std::string MODEL_PATH = "../models/sphere.obj";
-    const std::string TEXTURE_PATH = "../textures/wf.png";
+    const std::string TEXTURE_PATH = "../textures/halfred.png";
 
     
 
@@ -109,11 +103,8 @@ private:
     DataBuffer                      vertexbuffer;
     DataBuffer                      indexbuffer;
     std::vector<DataBuffer>         uniformbuffers;
-
-    CommandPool                     commandpool_imgui;
-    RenderPass                      renderpass_imgui;
-    std::vector<Framebuffer>        framebuffers_imgui;
-
+    
+    GUI                             m_gui;
 
     std::unique_ptr<Mesh> myMesh;
       

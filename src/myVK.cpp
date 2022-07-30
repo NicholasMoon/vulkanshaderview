@@ -93,52 +93,7 @@ void MyVK::initVulkan() {
 
     descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Imgui setup begin
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // Create Imgui renderpass
-    renderpass_imgui.createImGuiRenderPass(swapchain, physicaldevice, logicaldevice);
-    commandpool_imgui.createCommandPool(physicaldevice, logicaldevice, surface);
-    commandpool_imgui.createCommandBuffers(swapchain.vkSwapChainFramebuffers.size(), logicaldevice);
-    framebuffers_imgui.resize(swapchain.vkSwapChainImageViews.size());
-    for (int j = 0; j < swapchain.vkSwapChainImageViews.size(); ++j) {
-        framebuffers_imgui[j].createFrameBufferImGui(j, logicaldevice, swapchain, renderpass_imgui);
-    }
-    
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForVulkan(window, true);
-    ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = vulkaninstance.instance;
-    init_info.PhysicalDevice = physicaldevice.physicalDevice;
-    init_info.Device = logicaldevice.device;
-    init_info.QueueFamily = physicaldevice.findQueueFamilies(surface).graphicsFamily.value();
-    init_info.Queue = logicaldevice.graphicsQueue;
-    init_info.PipelineCache = VK_NULL_HANDLE;
-    init_info.DescriptorPool = descriptorpool.vkDescriptorPool;
-    init_info.Subpass = 0;
-    init_info.MinImageCount = swapchain.minimumframebuffers;
-    init_info.ImageCount = swapchain.vkSwapChainImageViews.size();
-    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-    init_info.Allocator = nullptr;
-    init_info.CheckVkResultFn = check_vk_result;
-    ImGui_ImplVulkan_Init(&init_info, renderpass_imgui.vkRenderPass);
-
-    VkCommandBuffer commandbuffer_imgui = beginSingleTimeCommands(commandpool_imgui, logicaldevice);
-    ImGui_ImplVulkan_CreateFontsTexture(commandbuffer_imgui);
-    endSingleTimeCommands(commandbuffer_imgui, commandpool_imgui, logicaldevice);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Imgui setup end
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool);
 
     texture.createTextureImage(TEXTURE_PATH, logicaldevice, physicaldevice, commandpool);
     texture.createTextureImageView(logicaldevice);
@@ -161,11 +116,9 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 1.0f));
+    ubo.model = glm::mat4(1.0);
 
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-    //std::cout << "Eye Position: " << ubo.view[0][3] << " " << ubo.view[1][3] << " " << ubo.view[2][3] << std::endl;
 
     ubo.proj = glm::perspective(glm::radians(45.0f), swapchain.vkSwapChainExtent.width / (float)swapchain.vkSwapChainExtent.height, 0.1f, 10.0f);
 
@@ -173,7 +126,13 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
 
     ubo.modelInvTr = glm::inverse(glm::transpose(ubo.model));
 
-    ubo.lightPos = glm::vec3(2 * sin(time) * sin(time), 2 * cos(time) * cos(time), 0.5);
+    ubo.camPos = glm::vec4(2.0f, 2.0f, 2.0f, 0);
+
+    ubo.lightPos = glm::vec4(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z, 0);
+    ubo.lightCol = glm::vec4(m_gui.light_col_r, m_gui.light_col_g, m_gui.light_col_b, 0);
+
+    ubo.metallic = m_gui.metallic;
+    ubo.roughness = m_gui.roughness;
 
     void* data;
     vkMapMemory(logicaldevice.device, uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(ubo), 0, &data);
@@ -208,20 +167,12 @@ void MyVK::drawFrame() {
     vkResetCommandBuffer(commandpool.vkCommandBuffers[currentFrame], 0);
     renderpass.executeRenderPass(commandpool, currentFrame, imageIndex, swapchain, graphicspipeline, descriptorsets, vertexbuffer, indexbuffer, myMesh.get());
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Imgui render code begin
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    vkResetCommandBuffer(commandpool_imgui.vkCommandBuffers[currentFrame], 0);
-    renderpass_imgui.executeImguiRenderPass(commandpool_imgui, currentFrame, imageIndex, swapchain, graphicspipeline, framebuffers_imgui);
+    // record imgui command buffer
+    m_gui.recordRenderCommand(swapchain, graphicspipeline, currentFrame, imageIndex);
 
     // create a combination of normal rendering and imgui rendering command buffers
     std::array<VkCommandBuffer, 2> submitCommandBuffers =
-    { commandpool.vkCommandBuffers[currentFrame], commandpool_imgui.vkCommandBuffers[currentFrame] };
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Imgui render code end
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    { commandpool.vkCommandBuffers[currentFrame], m_gui.commandpool_imgui.vkCommandBuffers[currentFrame] };
 
     // submit command buffer
     VkSubmitInfo submitInfo{};
@@ -284,11 +235,7 @@ void MyVK::cleanupSwapChain() {
     renderpass.destroyRenderPass(logicaldevice);
 
     // imgui stuff
-    renderpass_imgui.destroyRenderPass(logicaldevice);
-
-    for (int j = 0; j < framebuffers_imgui.size(); ++j) {
-        framebuffers_imgui[j].destroyFrameBufferImGui(logicaldevice);
-    }
+    m_gui.resizeSwapchainDestroy(logicaldevice);
 
     // handle swapchain (and framebuffers)
     swapchain.destroySwapChain(logicaldevice);
@@ -316,24 +263,15 @@ void MyVK::recreateSwapChain() {
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
     swapchain.createFramebuffers(logicaldevice, renderpass, depthbuffer, msaabuffer);
 
-    renderpass_imgui.createImGuiRenderPass(swapchain, physicaldevice, logicaldevice);
-    framebuffers_imgui.resize(swapchain.vkSwapChainImageViews.size());
-    for (int j = 0; j < swapchain.vkSwapChainImageViews.size(); ++j) {
-        framebuffers_imgui[j].createFrameBufferImGui(j, logicaldevice, swapchain, renderpass_imgui);
-    }
-
-    ImGui_ImplVulkan_SetMinImageCount(swapchain.minimumframebuffers);
+    // recreate/resize gui
+    m_gui.resizeSwapchainRecreate(logicaldevice, physicaldevice, swapchain);
 }
 
 void MyVK::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::ShowDemoWindow();
-        ImGui::Render();
+        m_gui.updateGUI();
 
         drawFrame();
 
@@ -349,11 +287,9 @@ void MyVK::cleanup() {
     cleanupSwapChain();
 
     // handle imgui
-    commandpool_imgui.destroyCommandPool(logicaldevice);
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    m_gui.destroy(logicaldevice);
 
+    // handle rest of myVK items
     texture.destroyImage(logicaldevice);
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         uniformbuffers[i].destroyBuffer(logicaldevice);
