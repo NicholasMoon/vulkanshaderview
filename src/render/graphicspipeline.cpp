@@ -4,45 +4,14 @@ GraphicsPipeline::GraphicsPipeline() {}
 
 GraphicsPipeline::~GraphicsPipeline() {}
 
-void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevice &logicaldevice, DescriptorSetLayout &descriptorsetlayout, RenderPass& renderpass, MSAABuffer &msaabuffer) {
-    // generate shader bytecode
-    std::vector<char> vertShaderCode = readFile("../shaders/vertshader.spv");
-    std::vector<char> fragShaderCode = readFile("../shaders/pbr.spv");
-
-    // create shader modules for our vert and frag shader bytecode
-    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode, logicaldevice);
-    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode, logicaldevice);
-
-
-    // create info struct for vert shader stage
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertShaderStageInfo.module = vertShaderModule;
-    vertShaderStageInfo.pName = "main";
-    vertShaderStageInfo.pSpecializationInfo = nullptr;
-
-    // create info struct for frag shader stage
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
-    fragShaderStageInfo.pSpecializationInfo = nullptr;
-
-    VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-
-    // get binding/attrib description for our vertices
-    VkVertexInputBindingDescription bindingDescription = Vertex::getBindingDescription();
-    std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = Vertex::getAttributeDescriptions();
-
+void GraphicsPipeline::createGraphicsPipeline(ShaderProgram& shaderprogram, Swapchain &swapchain, LogicalDevice &logicaldevice, DescriptorSetLayout &descriptorsetlayout, RenderPass& renderpass, MSAABuffer &msaabuffer) {
     // create info struct for vertex input stage
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;; // Optional
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data(); // Optional
+    vertexInputInfo.pVertexBindingDescriptions = &shaderprogram.bindingDescription;; // Optional
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(shaderprogram.attributeDescriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions = shaderprogram.attributeDescriptions.data(); // Optional
 
     // create info struct for primitive assembly stage
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -154,7 +123,7 @@ void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevic
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pStages = shaderprogram.shaderStages;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
     pipelineInfo.pViewportState = &viewportState;
@@ -173,29 +142,12 @@ void GraphicsPipeline::createGraphicsPipeline(Swapchain &swapchain, LogicalDevic
     if (vkCreateGraphicsPipelines(logicaldevice.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
-
-    // destroy our shader modules
-    vkDestroyShaderModule(logicaldevice.device, fragShaderModule, nullptr);
-    vkDestroyShaderModule(logicaldevice.device, vertShaderModule, nullptr);
 }
 
 // destroy graphics pipeline and pipeline layout (uniform variables)
 void GraphicsPipeline::destroyGraphicsPipeline(LogicalDevice& logicaldevice) {
+    // destroy shader modules
     vkDestroyPipelineLayout(logicaldevice.device, vkPipelineLayout, nullptr);
     vkDestroyPipeline(logicaldevice.device, vkGraphicsPipeline, nullptr);
 }
 
-// creates a shader module out of a shader in a bytecode array
-VkShaderModule createShaderModule(const std::vector<char>& code, LogicalDevice &logicaldevice) {
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-
-    VkShaderModule shaderModule;
-    if (vkCreateShaderModule(logicaldevice.device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create shader module!");
-    }
-
-    return shaderModule;
-}

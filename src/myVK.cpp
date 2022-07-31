@@ -82,7 +82,10 @@ void MyVK::initVulkan() {
 
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
     descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
-    graphicspipeline.createGraphicsPipeline(swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+
+    shader.create(VS_PATH, FS_PATH, logicaldevice);
+
+    graphicspipeline.createGraphicsPipeline(shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
     commandpool.createCommandPool(physicaldevice, logicaldevice, surface);
     
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
@@ -258,7 +261,7 @@ void MyVK::recreateSwapChain() {
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
-    graphicspipeline.createGraphicsPipeline(swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+    graphicspipeline.createGraphicsPipeline(shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
     swapchain.createFramebuffers(logicaldevice, renderpass, depthbuffer, msaabuffer);
@@ -288,6 +291,9 @@ void MyVK::cleanup() {
 
     // handle imgui
     m_gui.destroy(logicaldevice);
+
+    // handle shader program
+    shader.destroy(logicaldevice);
 
     // handle rest of myVK items
     texture.destroyImage(logicaldevice);

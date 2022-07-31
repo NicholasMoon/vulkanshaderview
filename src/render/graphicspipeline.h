@@ -16,6 +16,7 @@
 #include "renderpass.h"
 #include "../core/descriptorsetlayout.h"
 #include "../vertex.h"
+#include "../scene/material/shaderprogram.h"
 
 class RenderPass;
 class MSAABuffer;
@@ -25,7 +26,7 @@ public:
 	GraphicsPipeline();
 	~GraphicsPipeline();
 
-	void createGraphicsPipeline(Swapchain& swapchain, LogicalDevice& logicaldevice, DescriptorSetLayout& descriptorSetLayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
+	void createGraphicsPipeline(ShaderProgram& shaderprogram, Swapchain& swapchain, LogicalDevice& logicaldevice, DescriptorSetLayout& descriptorSetLayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
 	
 	void destroyGraphicsPipeline(LogicalDevice& logicaldevice);
 
@@ -41,9 +42,6 @@ public:
 private:
 
 };
-
-// creates a shader module out of a shader in a bytecode array
-VkShaderModule createShaderModule(const std::vector<char>& code, LogicalDevice& logicaldevice);
 
 #endif
 

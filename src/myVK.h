@@ -59,6 +59,8 @@
 #include "core/commandpool.h"
 #include "core/surface.h"
 #include "gui/gui.h"
+#include "scene/material/material.h"
+#include "scene/material/shaderprogram.h"
 
 #include "scene/mesh.h"
 #include "vertex.h"
@@ -79,10 +81,13 @@ public:
     const int MAX_FRAMES_IN_FLIGHT = 2; 
     uint32_t currentFrame = 0;
 
-    std::string MODEL_PATH = "../models/sphere.obj";
-    const std::string TEXTURE_PATH = "../textures/halfred.png";
-
+    std::string MODEL_PATH = "../models/viking_room.obj";
+    const std::string TEXTURE_PATH = "../textures/viking_room.png";
+    std::string VS_PATH = "../shaders/vertshader.spv";
+    std::string FS_PATH = "../shaders/pbr.spv";
     
+    uint32_t incr = 0;
+
 
 private:
     GLFWwindow*                     window;
@@ -106,7 +111,8 @@ private:
     
     GUI                             m_gui;
 
-    std::unique_ptr<Mesh> myMesh;
+    ShaderProgram                   shader;
+    std::unique_ptr<Mesh>           myMesh;
       
     std::vector<VkSemaphore> imageAvailableSemaphores; // GPU semaphore - image retrieved from swapchain and ready for rendering
     std::vector<VkSemaphore> renderFinishedSemaphores; // GPU semaphore - rendering finished and can present image
