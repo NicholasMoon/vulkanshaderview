@@ -64,6 +64,10 @@
 #include "scene/primitive.h"
 #include "scene/camera/camera.h"
 #include "scene/light/light.h"
+#include "scene/light/pointlight.h"
+#include "scene/light/spotlight.h"
+#include "scene/light/directionallight.h"
+#include "scene/light/arealight.h"
 
 #include "scene/geometry/mesh.h"
 #include "vertex.h"
