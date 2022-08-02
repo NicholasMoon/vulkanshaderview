@@ -121,6 +121,10 @@ void MyVK::initVulkan() {
 }
 
 void MyVK::updateUniformBuffer(uint32_t currentImage) {
+    m_camera.m_eye = glm::vec3(m_gui.cam_eye_x, m_gui.cam_eye_y, m_gui.cam_eye_z);
+    m_camera.m_ref = glm::vec3(m_gui.cam_ref_x, m_gui.cam_ref_y, m_gui.cam_ref_z);
+
+
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();

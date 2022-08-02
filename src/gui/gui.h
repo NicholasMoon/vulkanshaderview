@@ -47,6 +47,9 @@ public:
     float light_pos_x = 20.0f, light_pos_y = -20.0f, light_pos_z = 20.0f;
     float light_col_r = 100.0f, light_col_g = 100.0f, light_col_b = 100.0f;
 
+    float cam_eye_x = 2.0f, cam_eye_y = 2.0f, cam_eye_z = 2.0f;
+    float cam_ref_x = 0.0f, cam_ref_y = 0.0f, cam_ref_z = 0.0f;
+
     float metallic = 0.5f, roughness = 0.5f;
 private:
 

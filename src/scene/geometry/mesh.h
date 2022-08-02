@@ -22,6 +22,8 @@ public:
 	void loadOBJ(std::string& filePath);
 	void toString();
 
+
+
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 private:

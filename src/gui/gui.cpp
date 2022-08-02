@@ -136,9 +136,8 @@ IMGUI_API void GUI::showGUI(bool* p_open) {
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("Lighting"))
-    {
-        ImGui::Text("Here is where you can change lighting!");
-
+    {       
+        // Light
         ImGui::SliderFloat("light position X", &light_pos_x, -20.0f, 20.0f, "%.3f");
         ImGui::SliderFloat("light position Y", &light_pos_y, -20.0f, 20.0f, "%.3f");
         ImGui::SliderFloat("light position Z", &light_pos_z, -20.0f, 20.0f, "%.3f");
@@ -146,7 +145,23 @@ IMGUI_API void GUI::showGUI(bool* p_open) {
         ImGui::SliderFloat("light color R", &light_col_r, 0.0f, 100.0f, "%.3f");
         ImGui::SliderFloat("light color G", &light_col_g, 0.0f, 100.0f, "%.3f");
         ImGui::SliderFloat("light color B", &light_col_b, 0.0f, 100.0f, "%.3f");
+    }
 
+    if (ImGui::CollapsingHeader("Camera"))
+    {
+        // Camera
+        ImGui::SliderFloat("camera eye X", &cam_eye_x, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera eye Y", &cam_eye_y, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera eye Z", &cam_eye_z, -10.0f, 10.0f, "%.3f");
+
+        ImGui::SliderFloat("camera ref X", &cam_ref_x, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera ref Y", &cam_ref_y, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera ref Z", &cam_ref_z, -10.0f, 10.0f, "%.3f");
+    }
+
+    if (ImGui::CollapsingHeader("Material"))
+    {
+        // Material
         ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f, "%.3f");
         ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f, "%.3f");
     }
