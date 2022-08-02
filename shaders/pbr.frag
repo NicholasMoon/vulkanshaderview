@@ -14,10 +14,13 @@ layout(binding = 0) uniform UniformBufferObject {
 
 layout(binding = 1) uniform sampler2D texSampler;
 
-layout(location = 0) in vec3 fragColor;
-layout(location = 1) in vec2 fragTexCoord;
-layout(location = 2) in vec3 fragNormal;
-layout(location = 4) in vec3 fragPos;
+layout(binding = 2) uniform sampler2D texSampler2;
+
+layout(location = 0) in vec3 fragPos;
+layout(location = 1) in vec3 fragNor;
+layout(location = 2) in vec3 fragTan;
+layout(location = 3) in vec3 fragBit;
+layout(location = 4) in vec2 fragUV;
 
 layout(location = 0) out vec4 outColor;
 
@@ -53,9 +56,9 @@ float microfacetDistrib(float roughness, vec3 n, vec3 wh) {
 
 void main()
 {
-    vec3 n = normalize(fragNormal);
+    vec3 n = normalize(fragNor);
 	
-	vec3 albedo = vec3(texture(texSampler, fragTexCoord));
+	vec3 albedo = vec3(texture(texSampler, fragUV));
 
     // output light color of fragment
     vec3 Lo = vec3(0,0,0);

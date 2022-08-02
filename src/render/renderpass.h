@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include "../utils.h"
 
@@ -28,7 +29,8 @@
 #include "graphicspipeline.h"
 #include "../core/descriptorsets.h"
 #include "../databuffer/databuffer.h"
-#include "../scene/mesh.h"
+#include "../scene/geometry/mesh.h"
+#include "../scene/primitive.h"
 
 class Swapchain;
 class MSAABuffer;
@@ -44,7 +46,7 @@ public:
 
 	void createRenderPass(Swapchain& swapchain, PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, DepthBuffer& depthbuffer, MSAABuffer& msaabuffer);
 
-	void executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, DescriptorSets& descriptorsets, DataBuffer& vertexbuffer, DataBuffer& indexbuffer, Mesh *myMesh);
+	void executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, std::vector<std::unique_ptr<Primitive>>& primitive);
 
 	void createImGuiRenderPass(Swapchain& swapchain, PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice);
 

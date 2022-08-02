@@ -40,7 +40,7 @@ public:
 	VkPipelineShaderStageCreateInfo shaderStages[2];
 
 	VkVertexInputBindingDescription bindingDescription;
-	std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions;
+	std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions;
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 

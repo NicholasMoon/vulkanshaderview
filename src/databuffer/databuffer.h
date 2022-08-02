@@ -8,9 +8,6 @@
 #include "../ubo.h"
 #include "../core/commandpool.h"
 
-#include "../scene/mesh.h"
-
-
 class DataBuffer {
 public:
 	DataBuffer();
@@ -19,15 +16,6 @@ public:
 
 	// create a buffer and allocate memory
 	void createBuffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
-
-	// creates vertex buffer to store vert data
-	void createVertexBuffer(Mesh* myMesh, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool);
-
-	// creates index buffer to store vert index data
-	void createIndexBuffer(Mesh* myMesh, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool);
-
-	// create buffers for the uniform variables (one for each frame in flight)
-	void createUniformBuffer(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
 	// copies memory from one buffer to another
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, LogicalDevice& logicaldevice, CommandPool& commandPool);

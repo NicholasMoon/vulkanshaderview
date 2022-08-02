@@ -139,9 +139,9 @@ IMGUI_API void GUI::showGUI(bool* p_open) {
     {
         ImGui::Text("Here is where you can change lighting!");
 
-        ImGui::SliderFloat("light position X", &light_pos_x, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("light position Y", &light_pos_y, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("light position Z", &light_pos_z, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("light position X", &light_pos_x, -20.0f, 20.0f, "%.3f");
+        ImGui::SliderFloat("light position Y", &light_pos_y, -20.0f, 20.0f, "%.3f");
+        ImGui::SliderFloat("light position Z", &light_pos_z, -20.0f, 20.0f, "%.3f");
 
         ImGui::SliderFloat("light color R", &light_col_r, 0.0f, 100.0f, "%.3f");
         ImGui::SliderFloat("light color G", &light_col_g, 0.0f, 100.0f, "%.3f");

@@ -4,7 +4,7 @@ DescriptorSets::DescriptorSets() {}
 
 DescriptorSets::~DescriptorSets() {}
 
-void DescriptorSets::createDescriptorSets(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout &descriptorsetlayout, std::vector<DataBuffer> &uniformBuffers, Texture& texture) {
+void DescriptorSets::createDescriptorSets(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout &descriptorsetlayout, std::vector<DataBuffer> &uniformBuffers, Texture& texture, Texture& normalmap) {
     std::vector<VkDescriptorSetLayout> layouts(maxFramesinFlight, descriptorsetlayout.vkDescriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -25,12 +25,17 @@ void DescriptorSets::createDescriptorSets(uint32_t maxFramesinFlight, LogicalDev
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = texture.get_vkImageView();
-        imageInfo.sampler = texture.vkTextureSampler;
+        VkDescriptorImageInfo imageInfoAlbedo{};
+        imageInfoAlbedo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfoAlbedo.imageView = texture.get_vkImageView();
+        imageInfoAlbedo.sampler = texture.vkTextureSampler;
 
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        VkDescriptorImageInfo imageInfoNormal{};
+        imageInfoNormal.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfoNormal.imageView = normalmap.get_vkImageView();
+        imageInfoNormal.sampler = normalmap.vkTextureSampler;
+
+        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = vkDescriptorSets[i];
@@ -46,7 +51,15 @@ void DescriptorSets::createDescriptorSets(uint32_t maxFramesinFlight, LogicalDev
         descriptorWrites[1].dstArrayElement = 0;
         descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pImageInfo = &imageInfo;
+        descriptorWrites[1].pImageInfo = &imageInfoAlbedo;
+
+        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[2].dstSet = vkDescriptorSets[i];
+        descriptorWrites[2].dstBinding = 2;
+        descriptorWrites[2].dstArrayElement = 0;
+        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[2].descriptorCount = 1;
+        descriptorWrites[2].pImageInfo = &imageInfoNormal;
 
         vkUpdateDescriptorSets(logicaldevice.device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }

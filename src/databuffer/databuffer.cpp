@@ -33,55 +33,6 @@ void DataBuffer::createBuffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags pr
     vkBindBufferMemory(logicaldevice.device, vkBuffer, vkBufferMemory, 0);
 }
 
-// creates vertex buffer to store vert data
-void DataBuffer::createVertexBuffer(Mesh* myMesh, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool) {
-    vkBufferSize = sizeof(myMesh->vertices[0]) * myMesh->vertices.size();
-
-    // create staging buffer
-    DataBuffer stagingBuffer(vkBufferSize);
-    stagingBuffer.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
-
-    void* data;
-    vkMapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, 0, vkBufferSize, 0, &data);
-    memcpy(data, myMesh->vertices.data(), (size_t)vkBufferSize);
-    vkUnmapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory);
-
-    // create actual buffer
-    createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, logicaldevice, physicaldevice);
-
-    copyBuffer(stagingBuffer.vkBuffer, vkBuffer, vkBufferSize, logicaldevice, commandpool);
-
-    vkDestroyBuffer(logicaldevice.device, stagingBuffer.vkBuffer, nullptr);
-    vkFreeMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, nullptr);
-}
-
-// creates index buffer to store vert index data
-void DataBuffer::createIndexBuffer(Mesh* myMesh, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool) {
-    vkBufferSize = sizeof(myMesh->indices[0]) * myMesh->indices.size();
-
-    DataBuffer stagingBuffer(vkBufferSize);
-    stagingBuffer.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
-
-    void* data;
-    vkMapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, 0, vkBufferSize, 0, &data);
-    memcpy(data, myMesh->indices.data(), (size_t)vkBufferSize);
-    vkUnmapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory);
-
-    createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, logicaldevice, physicaldevice);
-
-    copyBuffer(stagingBuffer.vkBuffer, vkBuffer, vkBufferSize, logicaldevice, commandpool);
-
-    vkDestroyBuffer(logicaldevice.device, stagingBuffer.vkBuffer, nullptr);
-    vkFreeMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, nullptr);
-}
-
-// create buffers for the uniform variables (one for each frame in flight)
-void DataBuffer::createUniformBuffer(LogicalDevice &logicaldevice, PhysicalDevice& physicaldevice) {
-    vkBufferSize = sizeof(UniformBufferObject);
-
-    createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
-}
-
 // copies memory from one buffer to another
 void DataBuffer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, LogicalDevice& logicaldevice, CommandPool& commandpool) {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandpool, logicaldevice);

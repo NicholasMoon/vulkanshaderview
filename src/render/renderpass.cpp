@@ -89,7 +89,7 @@ void RenderPass::createRenderPass(Swapchain &swapchain, PhysicalDevice &physical
 }
 
 // execute render pass and record command buffer
-void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, DescriptorSets& descriptorsets, DataBuffer& vertexbuffer, DataBuffer& indexbuffer, Mesh *myMesh) {
+void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, std::vector<std::unique_ptr<Primitive>>& primitives) {
     // start recording command buffer
     commandpool.startRecordCommandBuffer(bufferIndex);
 
@@ -112,15 +112,19 @@ void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferInde
 
     vkCmdBindPipeline(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkGraphicsPipeline);
 
-    VkBuffer vertexBuffers[] = { vertexbuffer.vkBuffer };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandpool.vkCommandBuffers[bufferIndex], 0, 1, vertexBuffers, offsets);
+    for (int meshIndex = 0; meshIndex < primitives.size(); ++meshIndex) {
+        VkBuffer vertexBuffers[] = { primitives[meshIndex]->m_vertexbuffer.vkBuffer };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(commandpool.vkCommandBuffers[bufferIndex], 0, 1, vertexBuffers, offsets);
 
-    vkCmdBindIndexBuffer(commandpool.vkCommandBuffers[bufferIndex], indexbuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(commandpool.vkCommandBuffers[bufferIndex], primitives[meshIndex]->m_indexbuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-    vkCmdBindDescriptorSets(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkPipelineLayout, 0, 1, &descriptorsets.vkDescriptorSets[bufferIndex], 0, nullptr);
+        vkCmdBindDescriptorSets(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkPipelineLayout, 0, 1, &primitives[meshIndex]->m_descriptorsets.vkDescriptorSets[bufferIndex], 0, nullptr);
 
-    vkCmdDrawIndexed(commandpool.vkCommandBuffers[bufferIndex], static_cast<uint32_t>(myMesh->indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
+        vkCmdDrawIndexed(commandpool.vkCommandBuffers[bufferIndex], static_cast<uint32_t>(primitives[meshIndex]->m_geometry.indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
+    }
+
+
 
     vkCmdEndRenderPass(commandpool.vkCommandBuffers[bufferIndex]);
 

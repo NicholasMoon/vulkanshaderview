@@ -61,8 +61,11 @@
 #include "gui/gui.h"
 #include "scene/material/material.h"
 #include "scene/material/shaderprogram.h"
+#include "scene/primitive.h"
+#include "scene/camera/camera.h"
+#include "scene/light/light.h"
 
-#include "scene/mesh.h"
+#include "scene/geometry/mesh.h"
 #include "vertex.h"
 #include "ubo.h"
 
@@ -81,8 +84,6 @@ public:
     const int MAX_FRAMES_IN_FLIGHT = 2; 
     uint32_t currentFrame = 0;
 
-    std::string MODEL_PATH = "../models/viking_room.obj";
-    const std::string TEXTURE_PATH = "../textures/viking_room.png";
     std::string VS_PATH = "../shaders/vertshader.spv";
     std::string FS_PATH = "../shaders/pbr.spv";
     
@@ -96,23 +97,26 @@ private:
     PhysicalDevice                  physicaldevice;
     LogicalDevice                   logicaldevice;
     Swapchain                       swapchain;
-    Texture                         texture;
     DepthBuffer                     depthbuffer;
     MSAABuffer                      msaabuffer;
     DescriptorPool                  descriptorpool;
-    DescriptorSets                  descriptorsets;
     DescriptorSetLayout             descriptorsetlayout;
     CommandPool                     commandpool;
     GraphicsPipeline                graphicspipeline;
     RenderPass                      renderpass;
-    DataBuffer                      vertexbuffer;
-    DataBuffer                      indexbuffer;
-    std::vector<DataBuffer>         uniformbuffers;
+
+    Camera                          m_camera;
     
     GUI                             m_gui;
 
     ShaderProgram                   shader;
-    std::unique_ptr<Mesh>           myMesh;
+
+    std::vector<std::string>                     model_paths = { "../models/stanford-bunny.obj", "../models/sphere.obj" };
+    std::vector<std::string>                     texture_paths = { "../textures/red.png", "../textures/white.png" };
+    std::vector<std::string>                     normalmap_paths = { "../textures/norm0.png", "../textures/halfred.png" };
+    std::vector<std::unique_ptr<Primitive>>      m_primitives;
+
+
       
     std::vector<VkSemaphore> imageAvailableSemaphores; // GPU semaphore - image retrieved from swapchain and ready for rendering
     std::vector<VkSemaphore> renderFinishedSemaphores; // GPU semaphore - rendering finished and can present image
@@ -129,11 +133,6 @@ private:
     void initWindow();
 
     void createSyncObjects();
-
-    // create buffers for the uniform variables (one for each frame in flight)
-    void createUniformBuffers();
-
-    void loadModel();
 
     // vulkan initialization
     void initVulkan();

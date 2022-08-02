@@ -44,7 +44,7 @@ public:
     RenderPass                      renderpass_imgui;
     std::vector<Framebuffer>        framebuffers_imgui;
 
-    float light_pos_x = 10.0f, light_pos_y = -10.0f, light_pos_z = 10.0f;
+    float light_pos_x = 20.0f, light_pos_y = -20.0f, light_pos_z = 20.0f;
     float light_col_r = 100.0f, light_col_g = 100.0f, light_col_b = 100.0f;
 
     float metallic = 0.5f, roughness = 0.5f;

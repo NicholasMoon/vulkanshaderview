@@ -17,14 +17,15 @@
 #include "../image/texture.h"
 #include "../databuffer/databuffer.h"
 
-
+class Texture;
+class DescriptorSetLayout;
 
 class DescriptorSets {
 public:
 	DescriptorSets();
 	~DescriptorSets();
 
-	void createDescriptorSets(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout& descriptorsetlayout, std::vector<DataBuffer>& uniformBuffers, Texture& texture);
+	void createDescriptorSets(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout& descriptorsetlayout, std::vector<DataBuffer>& uniformBuffers, Texture& texture, Texture& normalmap);
 
 	std::vector<VkDescriptorSet> vkDescriptorSets;
 private:
