@@ -3,17 +3,20 @@
 
 MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(), 
                depthbuffer(), msaabuffer(), descriptorpool(), descriptorsetlayout(), commandpool(),
-               graphicspipeline(), renderpass(), m_camera()
+               renderpass(), m_camera()
+               
 {
-    m_camera.m_eye = glm::vec3(2, 2, 2);
+    m_camera.m_eye = glm::vec3(0, 3.75, 7.5);
     m_camera.m_ref = glm::vec3(0, 0, 0);
-    m_camera.m_up = glm::vec3(0, 0, 1);
+    m_camera.m_up = glm::vec3(0, 1, 0);
     m_camera.m_fovy = glm::radians(45.0);
     m_camera.m_width = WIDTH;
     m_camera.m_height = HEIGHT;
     m_camera.calculateAspectRatio();
     m_camera.m_near = 0.1f;
-    m_camera.m_far = 10.0f;
+    m_camera.m_far = 30.0f;
+
+    
 }
 
 MyVK::~MyVK() {}
@@ -65,6 +68,14 @@ void MyVK::createSyncObjects() {
 // vulkan initialization
 void MyVK::initVulkan() {
 
+    /*for (int i = 0; i < 5; ++i) {
+        vs_paths.push_back("../shaders/vertshader.spv");
+        fs_paths.push_back("../shaders/pbr.spv");
+        model_paths.push_back("../models/sphere.obj");
+        texture_paths.push_back("../textures/red.png");
+        normalmap_paths.push_back("../textures/norm0.png");
+    }*/
+
     vulkaninstance.createInstance();
     vulkaninstance.setupDebugMessenger();
     surface.createSurface(vulkaninstance, window);
@@ -78,20 +89,25 @@ void MyVK::initVulkan() {
 
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
 
-    for (int u = 0; u < 2; ++u) {
-        m_primitives.push_back(std::make_unique<Primitive>());
-        m_primitives[u]->loadGeometryFromOBJ(model_paths[u]);
-    }
+    
 
     descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
 
-
-    shader.create(VS_PATH, FS_PATH, logicaldevice);
-
-    graphicspipeline.createGraphicsPipeline(shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+    //graphicspipeline.createGraphicsPipeline(m_shaderGGX, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
     commandpool.createCommandPool(physicaldevice, logicaldevice, surface);
     
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
+
+    for (int u = 0; u < model_paths.size(); ++u) {
+        m_primitives.push_back(std::make_unique<Primitive>());
+        m_primitives[u]->loadGeometryFromOBJ(model_paths[u]);
+        m_primitives[u]->loadMaterialFromShaders(vs_paths[u], fs_paths[u], logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
+        if (u > 1) {
+            m_primitives[u]->setTranslation(glm::vec3(2 * u - 10, 0, -5));
+        }
+    }
+    m_primitives[1]->setScale(glm::vec3(0.05));
+    m_primitives[1]->m_light.m_intensity = glm::vec3(2,2,2);
     
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
     
@@ -130,57 +146,27 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    UniformBufferObject ubo{};
-    ubo.model = glm::mat4(1.0);
-    ubo.model = glm::scale(ubo.model, glm::vec3(0.75, 0.75, 0.75));
+    for (int i = 0; i < m_primitives.size(); ++i) {
+        if (m_primitives[i]->m_light.m_intensity.x == 2) {
+            // light
+            m_primitives[i]->setTranslation(glm::vec3(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z));
+        }
+        m_primitives[i]->m_ubo.model = m_primitives[i]->m_modelMatrix;
+        m_primitives[i]->m_ubo.view = glm::lookAt(m_camera.m_eye, m_camera.m_ref, m_camera.m_up);
+        m_primitives[i]->m_ubo.proj = glm::perspective(m_camera.m_fovy, m_camera.m_aspect, m_camera.m_near, m_camera.m_far);
+        m_primitives[i]->m_ubo.proj[1][1] *= -1;
+        m_primitives[i]->m_ubo.modelInvTr = m_primitives[i]->m_modelMatrixInvTrans;
+        m_primitives[i]->m_ubo.camPos = glm::vec4(m_camera.m_eye, 0);
+        m_primitives[i]->m_ubo.lightPos = glm::vec4(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z, 0);
+        m_primitives[i]->m_ubo.lightCol = glm::vec4(m_gui.light_col_r, m_gui.light_col_g, m_gui.light_col_b, 0);
+        m_primitives[i]->m_ubo.metallic = m_gui.metallic;
+        m_primitives[i]->m_ubo.roughness = m_gui.roughness;
 
-    ubo.view = glm::lookAt(m_camera.m_eye, m_camera.m_ref, m_camera.m_up);
-
-    ubo.proj = glm::perspective(m_camera.m_fovy, m_camera.m_aspect, m_camera.m_near, m_camera.m_far);
-
-    ubo.proj[1][1] *= -1;
-
-    ubo.modelInvTr = glm::inverse(glm::transpose(ubo.model));
-
-    ubo.camPos = glm::vec4(2.0f, 2.0f, 2.0f, 0);
-
-    ubo.lightPos = glm::vec4(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z, 0);
-    ubo.lightCol = glm::vec4(m_gui.light_col_r, m_gui.light_col_g, m_gui.light_col_b, 0);
-
-    ubo.metallic = m_gui.metallic;
-    ubo.roughness = m_gui.roughness;
-
-    void* data;
-    vkMapMemory(logicaldevice.device, m_primitives[0]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(logicaldevice.device, m_primitives[0]->m_uniformbuffers[currentImage].vkBufferMemory);
-
-    UniformBufferObject ubo2{};
-    ubo2.model = glm::mat4(1.0);
-    ubo2.model = glm::scale(ubo2.model, glm::vec3(0.05, 0.05, 0.05));
-    ubo2.model = glm::translate(ubo2.model, glm::vec3(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z));
-
-    ubo2.view = glm::lookAt(m_camera.m_eye, m_camera.m_ref, m_camera.m_up);
-
-    ubo2.proj = glm::perspective(m_camera.m_fovy, m_camera.m_aspect, m_camera.m_near, m_camera.m_far);
-
-    ubo2.proj[1][1] *= -1;
-
-    ubo2.modelInvTr = glm::inverse(glm::transpose(ubo2.model));
-
-    ubo2.camPos = glm::vec4(2.0f, 2.0f, 2.0f, 0);
-
-    ubo2.lightPos = glm::vec4(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z, 0);
-    ubo2.lightCol = glm::vec4(m_gui.light_col_r * 10, m_gui.light_col_g * 10, m_gui.light_col_b * 10, 0);
-
-    ubo2.metallic = m_gui.metallic;
-    ubo2.roughness = m_gui.roughness;
-
-    void* data2;
-    vkMapMemory(logicaldevice.device, m_primitives[1]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(ubo2), 0, &data2);
-    memcpy(data2, &ubo2, sizeof(ubo2));
-    vkUnmapMemory(logicaldevice.device, m_primitives[1]->m_uniformbuffers[currentImage].vkBufferMemory);
-
+        void* data;
+        vkMapMemory(logicaldevice.device, m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_primitives[i]->m_ubo), 0, &data);
+        memcpy(data, &m_primitives[i]->m_ubo, sizeof(m_primitives[i]->m_ubo));
+        vkUnmapMemory(logicaldevice.device, m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory);
+    }
 }
 
 void MyVK::drawFrame() {
@@ -208,10 +194,10 @@ void MyVK::drawFrame() {
 
     // record command buffer
     vkResetCommandBuffer(commandpool.vkCommandBuffers[currentFrame], 0);
-    renderpass.executeRenderPass(commandpool, currentFrame, imageIndex, swapchain, graphicspipeline, m_primitives);
+    renderpass.executeRenderPass(commandpool, currentFrame, imageIndex, swapchain, m_primitives);
 
     // record imgui command buffer
-    m_gui.recordRenderCommand(swapchain, graphicspipeline, currentFrame, imageIndex);
+    m_gui.recordRenderCommand(swapchain, currentFrame, imageIndex);
 
     // create a combination of normal rendering and imgui rendering command buffers
     std::array<VkCommandBuffer, 2> submitCommandBuffers =
@@ -272,7 +258,9 @@ void MyVK::cleanupSwapChain() {
     depthbuffer.destroyImage(logicaldevice);
 
     // handle graphics pipeline
-    graphicspipeline.destroyGraphicsPipeline(logicaldevice);
+    for (int i = 0; i < m_primitives.size(); ++i) {
+        m_primitives[i]->m_material.m_pipeline.destroyGraphicsPipeline(logicaldevice);
+    }
 
     // handle render pass
     renderpass.destroyRenderPass(logicaldevice);
@@ -301,7 +289,9 @@ void MyVK::recreateSwapChain() {
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
-    graphicspipeline.createGraphicsPipeline(shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+    for (int i = 0; i < fs_paths.size(); ++i) {
+        m_primitives[i]->m_material.m_pipeline.createGraphicsPipeline(m_primitives[i]->m_material.m_shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+    }
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
     swapchain.createFramebuffers(logicaldevice, renderpass, depthbuffer, msaabuffer);
@@ -333,25 +323,24 @@ void MyVK::cleanup() {
     m_gui.destroy(logicaldevice);
 
     // handle shader program
-    shader.destroy(logicaldevice);
+    for (int i = 0; i < fs_paths.size(); ++i) {
+        m_primitives[i]->m_material.m_shader.destroy(logicaldevice);
+    }
 
     // handle rest of myVK items
-    m_primitives[0]->m_texture.destroyImage(logicaldevice);
-    m_primitives[1]->m_texture.destroyImage(logicaldevice);
-    m_primitives[0]->m_normalmap.destroyImage(logicaldevice);
-    m_primitives[1]->m_normalmap.destroyImage(logicaldevice);
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        m_primitives[0]->m_uniformbuffers[i].destroyBuffer(logicaldevice);
-    }
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        m_primitives[1]->m_uniformbuffers[i].destroyBuffer(logicaldevice);
+    for (int q = 0; q < model_paths.size(); ++q) {
+        m_primitives[q]->m_texture.destroyImage(logicaldevice);
+        m_primitives[q]->m_normalmap.destroyImage(logicaldevice);
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            m_primitives[q]->m_uniformbuffers[i].destroyBuffer(logicaldevice);
+        }
     }
     descriptorpool.destroyDescriptorPool(logicaldevice);
     descriptorsetlayout.destroyDescriptorSetLayout(logicaldevice);
-    m_primitives[0]->m_indexbuffer.destroyBuffer(logicaldevice);
-    m_primitives[1]->m_indexbuffer.destroyBuffer(logicaldevice);
-    m_primitives[0]->m_vertexbuffer.destroyBuffer(logicaldevice);
-    m_primitives[1]->m_vertexbuffer.destroyBuffer(logicaldevice);
+    for (int q = 0; q < model_paths.size(); ++q) {
+        m_primitives[q]->m_indexbuffer.destroyBuffer(logicaldevice);
+        m_primitives[q]->m_vertexbuffer.destroyBuffer(logicaldevice);
+    }
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(logicaldevice.device, renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(logicaldevice.device, imageAvailableSemaphores[i], nullptr);

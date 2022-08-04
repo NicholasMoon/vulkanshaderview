@@ -56,8 +56,19 @@ float microfacetDistrib(float roughness, vec3 n, vec3 wh) {
 
 void main()
 {
-    vec3 n = normalize(fragNor);
-	
+    vec3 normal = normalize(fragNor);
+	vec3 mappedNor = texture(texSampler2, fragUV).rgb;
+	mappedNor = normalize((2.0 * mappedNor) - 1.0);
+	mappedNor.x = clamp(mappedNor.x, 0, 1);
+	mappedNor.y = clamp(mappedNor.y, 0, 1);
+	mappedNor.z = clamp(mappedNor.z, 0, 1);
+	mappedNor = normalize(mappedNor);
+	vec3 normalizedTan = normalize(fragTan);
+	vec3 normalizedBit = normalize(fragBit);
+	mat3 surfaceToWorldN = mat3(normalizedTan, normalizedBit, normal);
+	mappedNor = surfaceToWorldN * mappedNor;
+	normal = normalize(mappedNor);
+
 	vec3 albedo = vec3(texture(texSampler, fragUV));
 
     // output light color of fragment
@@ -74,7 +85,6 @@ void main()
 	vec3 wo = normalize(ubo.camPos.rgb - fragPos);
 	vec3 wh = normalize(wo + wi);
 
-
 	// R term
 	vec3 R = mix(vec3(0.04), albedo, ubo.metallic);
 
@@ -82,15 +92,15 @@ void main()
 	vec3 F = fresnelReflectance(max(dot(wh, wo), 0.0), R);
 
 	// G term
-	float G = microfacetSelfShadow(ubo.roughness, wo, wi, n);
+	float G = microfacetSelfShadow(ubo.roughness, wo, wi, normal);
 
 	// D term
-	float D = microfacetDistrib(ubo.roughness, n, wh);
+	float D = microfacetDistrib(ubo.roughness, normal, wh);
 
 	// compute cook-torrance
 	vec3 f_cook_torrance = vec3(0,0,0);
-	if (dot(n, wi) >= 0.00001 && dot(n, wo) >= 0.00001) {
-		f_cook_torrance = (D*G*F) / (4.0f * dot(n, wo) * dot(n, wi));
+	if (dot(normal, wi) >= 0.00001 && dot(normal, wo) >= 0.00001) {
+		f_cook_torrance = (D*G*F) / (4.0f * dot(normal, wo) * dot(normal, wi));
 	}
 
 	// compute lambert weighting
@@ -102,13 +112,13 @@ void main()
 	vec3 f = kd * f_lambert + f_cook_torrance;
 
 	// accumulate total lighting on fragment
-	Lo += f * ithLightIrradiance * max(0.f, dot(wi, n));
+	Lo += f * ithLightIrradiance * max(0.f, dot(wi, normal));
 
-    // reinhard (HDR)
-    Lo = Lo / (Lo + vec3(1.0f, 1.0f, 1.0f));
+	// reinhard (HDR)
+	Lo = Lo / (Lo + vec3(1.0f, 1.0f, 1.0f));
 
-    // gamma correct
-    Lo = pow(Lo, vec3(GAMMA, GAMMA, GAMMA));
+	// gamma correct
+	Lo = pow(Lo, vec3(GAMMA, GAMMA, GAMMA));
 
-    outColor = vec4(Lo, 1);
+	outColor = vec4(Lo, 1);
 }

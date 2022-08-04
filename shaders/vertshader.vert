@@ -25,8 +25,7 @@ layout(location = 3) out vec3 fragBit;
 layout(location = 4) out vec2 fragUV;
 
 void main() {
-	mat3 invTranspose = mat3(ubo.modelInvTr);
-    fragNor = normalize(invTranspose * inNor);
+    fragNor = normalize(mat3(ubo.modelInvTr) * inNor);
 	fragTan = normalize(mat3(ubo.model) * inTan);
     fragBit = normalize(mat3(ubo.model) * inBit);
 

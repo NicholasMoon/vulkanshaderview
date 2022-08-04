@@ -50,7 +50,6 @@
 #include "image/depthbuffer.h"
 #include "image/msaabuffer.h"
 #include "commandbuffer.h"
-#include "render/graphicspipeline.h"
 #include "render/renderpass.h"
 #include "core/descriptorsets.h"
 #include "core/descriptorpool.h"
@@ -59,17 +58,9 @@
 #include "core/commandpool.h"
 #include "core/surface.h"
 #include "gui/gui.h"
-#include "scene/material/material.h"
-#include "scene/material/shaderprogram.h"
 #include "scene/primitive.h"
 #include "scene/camera/camera.h"
-#include "scene/light/light.h"
-#include "scene/light/pointlight.h"
-#include "scene/light/spotlight.h"
-#include "scene/light/directionallight.h"
-#include "scene/light/arealight.h"
 
-#include "scene/geometry/mesh.h"
 #include "vertex.h"
 #include "ubo.h"
 
@@ -87,9 +78,6 @@ public:
     const uint32_t HEIGHT = 720;
     const int MAX_FRAMES_IN_FLIGHT = 2; 
     uint32_t currentFrame = 0;
-
-    std::string VS_PATH = "../shaders/vertshader.spv";
-    std::string FS_PATH = "../shaders/pbr.spv";
     
     uint32_t incr = 0;
 
@@ -106,20 +94,20 @@ private:
     DescriptorPool                  descriptorpool;
     DescriptorSetLayout             descriptorsetlayout;
     CommandPool                     commandpool;
-    GraphicsPipeline                graphicspipeline;
+    
     RenderPass                      renderpass;
 
     Camera                          m_camera;
     
     GUI                             m_gui;
 
-    ShaderProgram                   shader;
 
-    std::vector<std::string>                     model_paths = { "../models/stanford-bunny.obj", "../models/sphere.obj" };
-    std::vector<std::string>                     texture_paths = { "../textures/red.png", "../textures/white.png" };
-    std::vector<std::string>                     normalmap_paths = { "../textures/norm0.png", "../textures/halfred.png" };
+    std::vector<std::string>                     vs_paths = { "../shaders/vertshader.spv", "../shaders/vertshader.spv" };
+    std::vector<std::string>                     fs_paths = { "../shaders/pbr.spv", "../shaders/light.spv" };
+    std::vector<std::string>                     model_paths = { "../models/sphere.obj", "../models/sphere.obj" };
+    std::vector<std::string>                     texture_paths = { "../textures/honeycombs.jpg", "../textures/white.png" };
+    std::vector<std::string>                     normalmap_paths = { "../textures/honeycombnorm1.png", "../textures/halfred.png" };
     std::vector<std::unique_ptr<Primitive>>      m_primitives;
-
 
       
     std::vector<VkSemaphore> imageAvailableSemaphores; // GPU semaphore - image retrieved from swapchain and ready for rendering

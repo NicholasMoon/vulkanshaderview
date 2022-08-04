@@ -89,7 +89,7 @@ void RenderPass::createRenderPass(Swapchain &swapchain, PhysicalDevice &physical
 }
 
 // execute render pass and record command buffer
-void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, std::vector<std::unique_ptr<Primitive>>& primitives) {
+void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, std::vector<std::unique_ptr<Primitive>>& primitives) {
     // start recording command buffer
     commandpool.startRecordCommandBuffer(bufferIndex);
 
@@ -110,16 +110,18 @@ void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferInde
 
     vkCmdBeginRenderPass(commandpool.vkCommandBuffers[bufferIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkGraphicsPipeline);
+    
 
     for (int meshIndex = 0; meshIndex < primitives.size(); ++meshIndex) {
+        vkCmdBindPipeline(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, primitives[meshIndex]->m_material.m_pipeline.vkGraphicsPipeline);
+
         VkBuffer vertexBuffers[] = { primitives[meshIndex]->m_vertexbuffer.vkBuffer };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandpool.vkCommandBuffers[bufferIndex], 0, 1, vertexBuffers, offsets);
 
         vkCmdBindIndexBuffer(commandpool.vkCommandBuffers[bufferIndex], primitives[meshIndex]->m_indexbuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicspipeline.vkPipelineLayout, 0, 1, &primitives[meshIndex]->m_descriptorsets.vkDescriptorSets[bufferIndex], 0, nullptr);
+        vkCmdBindDescriptorSets(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, primitives[meshIndex]->m_material.m_pipeline.vkPipelineLayout, 0, 1, &primitives[meshIndex]->m_descriptorsets.vkDescriptorSets[bufferIndex], 0, nullptr);
 
         vkCmdDrawIndexed(commandpool.vkCommandBuffers[bufferIndex], static_cast<uint32_t>(primitives[meshIndex]->m_geometry.indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
     }
@@ -180,7 +182,7 @@ void RenderPass::createImGuiRenderPass(Swapchain& swapchain, PhysicalDevice& phy
     }
 }
 
-void RenderPass::executeImguiRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, std::vector<Framebuffer>& framebuffers) {
+void RenderPass::executeImguiRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, std::vector<Framebuffer>& framebuffers) {
     // start recording command buffer
     commandpool.startRecordCommandBuffer(bufferIndex);
     

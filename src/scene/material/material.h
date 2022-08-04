@@ -1,18 +1,16 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 #include <iostream>
 #include <vector>
 
 
-class Material {
-public:
-	Material();
-	~Material();
+// problems with circular dependencies
+// see primitive.h
+// will patch later
 
-
-private:
-	
-};
 
 #endif

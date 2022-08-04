@@ -46,9 +46,9 @@ void GUI::setup(GLFWwindow* window, VulkanInstance& vulkaninstance, Surface& sur
 }
 
 // records render command for imgui to the correct command buffer
-void GUI::recordRenderCommand(Swapchain& swapchain, GraphicsPipeline& graphicspipeline, uint32_t bufferIndex, uint32_t imageIndex) {
+void GUI::recordRenderCommand(Swapchain& swapchain,  uint32_t bufferIndex, uint32_t imageIndex) {
     vkResetCommandBuffer(commandpool_imgui.vkCommandBuffers[bufferIndex], 0);
-    renderpass_imgui.executeImguiRenderPass(commandpool_imgui, bufferIndex, imageIndex, swapchain, graphicspipeline, framebuffers_imgui);
+    renderpass_imgui.executeImguiRenderPass(commandpool_imgui, bufferIndex, imageIndex, swapchain, framebuffers_imgui);
 }
 
 void GUI::resizeSwapchainRecreate(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain) {
@@ -138,13 +138,13 @@ IMGUI_API void GUI::showGUI(bool* p_open) {
     if (ImGui::CollapsingHeader("Lighting"))
     {       
         // Light
-        ImGui::SliderFloat("light position X", &light_pos_x, -20.0f, 20.0f, "%.3f");
-        ImGui::SliderFloat("light position Y", &light_pos_y, -20.0f, 20.0f, "%.3f");
-        ImGui::SliderFloat("light position Z", &light_pos_z, -20.0f, 20.0f, "%.3f");
+        ImGui::SliderFloat("light position X", &light_pos_x, -5.0f, 5.0f, "%.3f");
+        ImGui::SliderFloat("light position Y", &light_pos_y, -5.0f, 5.0f, "%.3f");
+        ImGui::SliderFloat("light position Z", &light_pos_z, -5.0f, 5.0f, "%.3f");
 
-        ImGui::SliderFloat("light color R", &light_col_r, 0.0f, 100.0f, "%.3f");
-        ImGui::SliderFloat("light color G", &light_col_g, 0.0f, 100.0f, "%.3f");
-        ImGui::SliderFloat("light color B", &light_col_b, 0.0f, 100.0f, "%.3f");
+        ImGui::SliderFloat("light color R", &light_col_r, 0.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("light color G", &light_col_g, 0.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("light color B", &light_col_b, 0.0f, 10.0f, "%.3f");
     }
 
     if (ImGui::CollapsingHeader("Camera"))

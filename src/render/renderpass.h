@@ -25,19 +25,16 @@
 #include "../core/framebuffer.h"
 #include "../image/depthbuffer.h"
 #include "../image/msaabuffer.h"
-#include "../vertex.h"
-#include "graphicspipeline.h"
 #include "../core/descriptorsets.h"
 #include "../databuffer/databuffer.h"
-#include "../scene/geometry/mesh.h"
 #include "../scene/primitive.h"
 
 class Swapchain;
 class MSAABuffer;
 class DepthBuffer;
-class GraphicsPipeline;
 
 class Framebuffer;
+class Primitive;
 
 class RenderPass {
 public:
@@ -46,11 +43,11 @@ public:
 
 	void createRenderPass(Swapchain& swapchain, PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, DepthBuffer& depthbuffer, MSAABuffer& msaabuffer);
 
-	void executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, std::vector<std::unique_ptr<Primitive>>& primitive);
+	void executeRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, std::vector<std::unique_ptr<Primitive>>& primitive);
 
 	void createImGuiRenderPass(Swapchain& swapchain, PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice);
 
-	void executeImguiRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, GraphicsPipeline& graphicspipeline, std::vector<Framebuffer>& framebuffers);
+	void executeImguiRenderPass(CommandPool& commandpool, uint32_t bufferIndex, uint32_t imageIndex, Swapchain& swapchain, std::vector<Framebuffer>& framebuffers);
 
 	void destroyRenderPass(LogicalDevice& logicaldevice);
 

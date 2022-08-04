@@ -72,15 +72,14 @@ struct Vertex {
     }
 
     bool operator==(const Vertex& other) const {
-        return pos == other.pos && nor == other.nor && tan == other.tan && bit == other.bit && uvs == other.uvs;
+        return pos == other.pos;
     }
 };
 
 namespace std {
     template<> struct hash<Vertex> {
         size_t operator()(Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.pos) ^
-                (hash<glm::vec3>()(vertex.nor) << 1)) >> 1);
+            return hash<glm::vec3>()(vertex.pos);
         }
     };
 }
