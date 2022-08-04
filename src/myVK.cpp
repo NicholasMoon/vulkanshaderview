@@ -6,17 +6,15 @@ MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(),
                renderpass(), m_camera()
                
 {
-    m_camera.m_eye = glm::vec3(0, 3.75, 7.5);
+    m_camera.m_eye = glm::vec3(0, 1.75, 5.5);
     m_camera.m_ref = glm::vec3(0, 0, 0);
     m_camera.m_up = glm::vec3(0, 1, 0);
     m_camera.m_fovy = glm::radians(45.0);
     m_camera.m_width = WIDTH;
     m_camera.m_height = HEIGHT;
-    m_camera.calculateAspectRatio();
+    m_camera.recalculateAspectRatio();
     m_camera.m_near = 0.1f;
     m_camera.m_far = 30.0f;
-
-    
 }
 
 MyVK::~MyVK() {}
@@ -105,9 +103,13 @@ void MyVK::initVulkan() {
         if (u > 1) {
             m_primitives[u]->setTranslation(glm::vec3(2 * u - 10, 0, -5));
         }
+        if (fs_paths[u] == "../shaders/light.spv") {
+            m_primitives[u]->m_light = std::make_unique<PointLight>();
+        }
     }
     m_primitives[1]->setScale(glm::vec3(0.05));
-    m_primitives[1]->m_light.m_intensity = glm::vec3(2,2,2);
+    m_primitives[1]->m_light->m_center = glm::vec3(2, 2, 2);
+    m_primitives[1]->m_light->m_intensity = glm::vec3(2,2,2);
     
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
     
@@ -115,12 +117,13 @@ void MyVK::initVulkan() {
 
     descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
 
-    m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool);
+    m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool, &m_primitives, &m_camera);
 
     for (int w = 0; w < m_primitives.size(); ++w) {
         // NOTE: currently no texture sharing between primitives
         m_primitives[w]->m_texture.createTextureImage(texture_paths[w], logicaldevice, physicaldevice, commandpool);
         m_primitives[w]->m_texture.createTextureImageView(logicaldevice);
+
         m_primitives[w]->m_texture.createTextureSampler(logicaldevice, physicaldevice);
         m_primitives[w]->m_normalmap.createTextureImage(normalmap_paths[w], logicaldevice, physicaldevice, commandpool);
         m_primitives[w]->m_normalmap.createTextureImageView(logicaldevice);
@@ -137,9 +140,7 @@ void MyVK::initVulkan() {
 }
 
 void MyVK::updateUniformBuffer(uint32_t currentImage) {
-    m_camera.m_eye = glm::vec3(m_gui.cam_eye_x, m_gui.cam_eye_y, m_gui.cam_eye_z);
-    m_camera.m_ref = glm::vec3(m_gui.cam_ref_x, m_gui.cam_ref_y, m_gui.cam_ref_z);
-
+    m_camera.recalculateAspectRatio();
 
     static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -147,9 +148,9 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     for (int i = 0; i < m_primitives.size(); ++i) {
-        if (m_primitives[i]->m_light.m_intensity.x == 2) {
+        if (m_primitives[i]->m_light != nullptr) {
             // light
-            m_primitives[i]->setTranslation(glm::vec3(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z));
+            m_primitives[i]->setTranslation(m_primitives[i]->m_light->m_center);
         }
         m_primitives[i]->m_ubo.model = m_primitives[i]->m_modelMatrix;
         m_primitives[i]->m_ubo.view = glm::lookAt(m_camera.m_eye, m_camera.m_ref, m_camera.m_up);
@@ -157,10 +158,8 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
         m_primitives[i]->m_ubo.proj[1][1] *= -1;
         m_primitives[i]->m_ubo.modelInvTr = m_primitives[i]->m_modelMatrixInvTrans;
         m_primitives[i]->m_ubo.camPos = glm::vec4(m_camera.m_eye, 0);
-        m_primitives[i]->m_ubo.lightPos = glm::vec4(m_gui.light_pos_x, m_gui.light_pos_y, m_gui.light_pos_z, 0);
-        m_primitives[i]->m_ubo.lightCol = glm::vec4(m_gui.light_col_r, m_gui.light_col_g, m_gui.light_col_b, 0);
-        m_primitives[i]->m_ubo.metallic = m_gui.metallic;
-        m_primitives[i]->m_ubo.roughness = m_gui.roughness;
+        m_primitives[i]->m_ubo.lightPos = glm::vec4(m_primitives[1]->m_light->m_center, 0);
+        m_primitives[i]->m_ubo.lightCol = glm::vec4(m_primitives[1]->m_light->m_intensity, 0);
 
         void* data;
         vkMapMemory(logicaldevice.device, m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_primitives[i]->m_ubo), 0, &data);
@@ -298,6 +297,11 @@ void MyVK::recreateSwapChain() {
 
     // recreate/resize gui
     m_gui.resizeSwapchainRecreate(logicaldevice, physicaldevice, swapchain);
+
+    // reset camera attributes
+    m_camera.m_width = width;
+    m_camera.m_height = height;
+    m_camera.recalculateAspectRatio();
 }
 
 void MyVK::mainLoop() {

@@ -5,7 +5,10 @@ GUI::GUI() {}
 GUI::~GUI() {}
 
 // sets up ImGui support (data structure init, imgui instance init, and texture load command)
-void GUI::setup(GLFWwindow* window, VulkanInstance& vulkaninstance, Surface& surface, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, DescriptorPool& descriptorpool) {
+void GUI::setup(GLFWwindow* window, VulkanInstance& vulkaninstance, Surface& surface, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, DescriptorPool& descriptorpool, std::vector<std::unique_ptr<Primitive>>* scene_ptr, Camera* cam) {
+    scene_ptr_imgui = scene_ptr;
+    camera_ptr_imgui = cam;
+
     renderpass_imgui.createImGuiRenderPass(swapchain, physicaldevice, logicaldevice);
     commandpool_imgui.createCommandPool(physicaldevice, logicaldevice, surface);
     commandpool_imgui.createCommandBuffers(swapchain.vkSwapChainFramebuffers.size(), logicaldevice); //throws warning
@@ -132,38 +135,55 @@ IMGUI_API void GUI::showGUI(bool* p_open) {
         ImGui::EndMenuBar();
     }
 
-    ImGui::Text("change values for the shaderview program here!");
-    ImGui::Spacing();
-
     if (ImGui::CollapsingHeader("Lighting"))
     {       
         // Light
-        ImGui::SliderFloat("light position X", &light_pos_x, -5.0f, 5.0f, "%.3f");
-        ImGui::SliderFloat("light position Y", &light_pos_y, -5.0f, 5.0f, "%.3f");
-        ImGui::SliderFloat("light position Z", &light_pos_z, -5.0f, 5.0f, "%.3f");
+        for (int i = 0; i < scene_ptr_imgui->size(); ++i) {
+            if ((*scene_ptr_imgui)[i]->m_light != nullptr) {
+                std::string label_light_position_X = "light " + std::to_string(i) + " position X";
+                std::string label_light_position_Y = "light " + std::to_string(i) + " position Y";
+                std::string label_light_position_Z = "light " + std::to_string(i) + " position Z";
 
-        ImGui::SliderFloat("light color R", &light_col_r, 0.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("light color G", &light_col_g, 0.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("light color B", &light_col_b, 0.0f, 10.0f, "%.3f");
+                std::string label_light_color_R = "light " + std::to_string(i) + " color R";
+                std::string label_light_color_G = "light " + std::to_string(i) + " color G";
+                std::string label_light_color_B = "light " + std::to_string(i) + " color B";
+
+                ImGui::SliderFloat(label_light_position_X.c_str(), &((*scene_ptr_imgui)[i]->m_light->m_center.x), -5.0f, 5.0f, "%.3f");
+                ImGui::SliderFloat(label_light_position_Y.c_str(), &((*scene_ptr_imgui)[i]->m_light->m_center.y), -5.0f, 5.0f, "%.3f");
+                ImGui::SliderFloat(label_light_position_Z.c_str(), &((*scene_ptr_imgui)[i]->m_light->m_center.z), -5.0f, 5.0f, "%.3f");
+
+                ImGui::SliderFloat(label_light_color_R.c_str(), &((*scene_ptr_imgui)[i]->m_light->m_intensity.x), 0.0f, 10.0f, "%.3f");
+                ImGui::SliderFloat(label_light_color_G.c_str(), &((*scene_ptr_imgui)[i]->m_light->m_intensity.y), 0.0f, 10.0f, "%.3f");
+                ImGui::SliderFloat(label_light_color_B.c_str(), &((*scene_ptr_imgui)[i]->m_light->m_intensity.z), 0.0f, 10.0f, "%.3f");
+            }
+        }
     }
 
     if (ImGui::CollapsingHeader("Camera"))
     {
         // Camera
-        ImGui::SliderFloat("camera eye X", &cam_eye_x, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("camera eye Y", &cam_eye_y, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("camera eye Z", &cam_eye_z, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera eye X", &camera_ptr_imgui->m_eye.x, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera eye Y", &camera_ptr_imgui->m_eye.y, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera eye Z", &camera_ptr_imgui->m_eye.z, -10.0f, 10.0f, "%.3f");
 
-        ImGui::SliderFloat("camera ref X", &cam_ref_x, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("camera ref Y", &cam_ref_y, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("camera ref Z", &cam_ref_z, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera ref X", &camera_ptr_imgui->m_ref.x, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera ref Y", &camera_ptr_imgui->m_ref.y, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera ref Z", &camera_ptr_imgui->m_ref.z, -10.0f, 10.0f, "%.3f");
+
+        ImGui::SliderInt("camera width", &camera_ptr_imgui->m_height, 0, 2560, "%.3f");
+        ImGui::SliderInt("camera height", &camera_ptr_imgui->m_width, 0, 1440, "%.3f");
+        ImGui::SliderFloat("camera fovy", &camera_ptr_imgui->m_fovy, 0.0f, 6.28f, "%.3f");
     }
 
     if (ImGui::CollapsingHeader("Material"))
     {
         // Material
-        ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f, "%.3f");
-        ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f, "%.3f");
+        for (int i = 0; i < scene_ptr_imgui->size(); ++i) {
+            std::string label_metallic = "metallic " + std::to_string(i);
+            std::string label_roughness = "roughness " + std::to_string(i);
+            ImGui::SliderFloat(label_metallic.c_str(), &((*scene_ptr_imgui)[i]->m_ubo.metallic), 0.0f, 1.0f, "%.3f");
+            ImGui::SliderFloat(label_roughness.c_str(), &((*scene_ptr_imgui)[i]->m_ubo.roughness), 0.0f, 1.0f, "%.3f");
+        }
     }
 
     // End of ShowDemoWindow()

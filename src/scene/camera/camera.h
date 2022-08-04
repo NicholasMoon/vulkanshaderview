@@ -33,8 +33,8 @@ public:
 	glm::vec3		m_eye;
 
 	// perspective parameters
-	unsigned int	m_width;
-	unsigned int	m_height;
+	int				m_width;
+	int				m_height;
 	float			m_aspect;
 	float			m_fovy;
 	float			m_near;
@@ -44,7 +44,7 @@ public:
 	float			m_theta, m_phi;   // Degrees along the sphere the camera is positioned
 	float			m_radius;       // Radius through the sphere the camera is positioned
 
-	float calculateAspectRatio();
+	void recalculateAspectRatio();
 
 private:
 

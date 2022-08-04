@@ -20,12 +20,13 @@
 
 #include "light.h"
 
-class DirectionalLight : Light {
+class DirectionalLight : public Light {
 public:
 	DirectionalLight();
-	~DirectionalLight();
+	virtual ~DirectionalLight();
 
 
+	glm::vec3 get_Intensity() { return m_intensity; }
 private:
 
 };

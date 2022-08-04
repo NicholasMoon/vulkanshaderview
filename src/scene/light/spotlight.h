@@ -20,13 +20,15 @@
 
 #include "light.h"
 
-class SpotLight : Light {
+class SpotLight : public Light {
 public:
 	SpotLight();
-	~SpotLight();
+	virtual ~SpotLight();
 
 	float spread;
 	float attenuation;
+
+	glm::vec3 get_Intensity() { return m_intensity; }
 
 private:
 

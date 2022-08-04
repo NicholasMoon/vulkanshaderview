@@ -20,10 +20,10 @@
 
 #include "light.h"
 
-class AreaLight : Light {
+class AreaLight : public Light {
 public:
 	AreaLight();
-	~AreaLight();
+	virtual ~AreaLight();
 
 
 private:

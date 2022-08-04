@@ -7,7 +7,6 @@ Camera::Camera() :	m_forward(), m_right(), m_up(), m_ref(), m_eye(),
 
 Camera::~Camera() {}
 
-float Camera::calculateAspectRatio() {
+void Camera::recalculateAspectRatio() {
 	m_aspect = (float)m_width / (float)m_height;
-	return m_aspect;
 }

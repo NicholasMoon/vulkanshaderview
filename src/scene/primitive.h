@@ -13,6 +13,9 @@
 
 #include "geometry/mesh.h"
 #include "light/light.h"
+#include "light/pointlight.h"
+#include "light/directionallight.h"
+#include "light/spotlight.h"
 #include "../ubo.h"
 
 class RenderPass;
@@ -128,7 +131,7 @@ public:
 
 	// primitive attributes
 	Mesh										m_geometry; // for now, don't support instancing/reusing these fields...
-	Light										m_light;
+	std::unique_ptr<Light>						m_light;
 	Material									m_material;
 
 	// transform data

@@ -20,11 +20,12 @@
 
 #include "light.h"
 
-class PointLight : Light {
+class PointLight : public Light {
 public:
 	PointLight();
-	~PointLight();
+	virtual ~PointLight();
 
+	glm::vec3 get_Intensity() { return m_intensity; }
 private:
 
 };

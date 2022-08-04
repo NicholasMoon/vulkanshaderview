@@ -21,10 +21,9 @@
 class Light {
 public:
 	Light();
-	~Light();
+	virtual ~Light();
 
 	glm::vec3 m_center;
-
 	glm::vec3 m_intensity;
 
 private:

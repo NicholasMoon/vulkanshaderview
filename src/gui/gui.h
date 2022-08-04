@@ -13,6 +13,8 @@
 #include "../core/vulkaninstance.h"
 #include "../core/surface.h"
 #include "../core/swapchain.h"
+#include "../scene/primitive.h"
+#include "../scene/camera/camera.h"
 
 static void check_vk_result(VkResult err)
 {
@@ -29,7 +31,7 @@ public:
     ~GUI();
 
     // app interface functions
-    void setup(GLFWwindow* window, VulkanInstance& vulkaninstance, Surface& surface, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, DescriptorPool& descriptorpool);
+    void setup(GLFWwindow* window, VulkanInstance& vulkaninstance, Surface& surface, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, DescriptorPool& descriptorpool, std::vector<std::unique_ptr<Primitive>>* scene_ptr, Camera* cam);
     void recordRenderCommand(Swapchain& swapchain, uint32_t bufferIndex, uint32_t imageIndex);
     void updateGUI();
     void resizeSwapchainRecreate(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain);
@@ -43,13 +45,9 @@ public:
     RenderPass                      renderpass_imgui;
     std::vector<Framebuffer>        framebuffers_imgui;
 
-    float light_pos_x = 0.0f, light_pos_y = 1.0f, light_pos_z = -1.5f;
-    float light_col_r = 10.0f, light_col_g = 10.0f, light_col_b = 10.0f;
 
-    float cam_eye_x = 0.0f, cam_eye_y = 3.75f, cam_eye_z = 7.5f;
-    float cam_ref_x = 0.0f, cam_ref_y = 0.0f, cam_ref_z = 0.0f;
-
-    float metallic = 0.5f, roughness = 0.5f;
+    std::vector<std::unique_ptr<Primitive>>*         scene_ptr_imgui;
+    Camera*                                          camera_ptr_imgui;
 private:
 
 };
