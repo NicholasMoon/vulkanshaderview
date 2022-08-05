@@ -9,16 +9,27 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
+struct PointLight_ubo {
+    alignas(16) glm::vec4 lightPos;
+    alignas(16) glm::vec4 lightCol;
+};
+
 struct UniformBufferObject {
     alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
     alignas(16) glm::mat4 modelInvTr;
     alignas(16) glm::vec4 camPos;
-    alignas(16) glm::vec4 lightPos;
-    alignas(16) glm::vec4 lightCol;
+    alignas(16) PointLight_ubo pointlights[10];
     alignas(4)  glm::float32 metallic;
     alignas(4)  glm::float32 roughness;
+};
+
+struct UBO_light_spv {
+    alignas(16) glm::mat4 model;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 proj;
+    alignas(16) glm::vec4 lightCol;
 };
 
 #endif

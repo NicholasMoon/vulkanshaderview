@@ -62,6 +62,7 @@
 #include "scene/camera/camera.h"
 #include "scene/light/light.h"
 #include "scene/light/pointlight.h"
+#include "scene/scene.h"
 
 #include "vertex.h"
 #include "ubo.h"
@@ -104,14 +105,15 @@ private:
     GUI                             m_gui;
 
 
-    std::vector<std::string>                     vs_paths = { "../shaders/vertshader.spv", "../shaders/vertshader.spv" };
-    std::vector<std::string>                     fs_paths = { "../shaders/pbr.spv", "../shaders/light.spv" };
-    std::vector<std::string>                     model_paths = { "../models/stanford-bunny.obj", "../models/sphere.obj" };
-    std::vector<std::string>                     texture_paths = { "../textures/white.png", "../textures/white.png" };
-    std::vector<std::string>                     normalmap_paths = { "../textures/norm0.png", "../textures/halfred.png" };
-    std::vector<std::unique_ptr<Primitive>>      m_primitives;
+    std::vector<std::string>                     vs_paths = { "../shaders/vertshader.spv", "../shaders/vertshader.spv", "../shaders/vertshader.spv", "../shaders/vertshader.spv", "../shaders/vertshader.spv" };
+    std::vector<std::string>                     fs_paths = { "../shaders/pbr.spv", "../shaders/light.spv", "../shaders/light.spv", "../shaders/light.spv", "../shaders/light.spv" };
+    std::vector<std::string>                     model_paths = { "../models/stanford-bunny.obj", "../models/sphere.obj", "../models/sphere.obj", "../models/sphere.obj", "../models/sphere.obj" };
+    std::vector<std::string>                     texture_paths = { "../textures/white.png", "../textures/white.png", "../textures/white.png", "../textures/white.png", "../textures/white.png" };
+    std::vector<std::string>                     normalmap_paths = { "../textures/norm0.png", "../textures/halfred.png", "../textures/halfred.png", "../textures/halfred.png", "../textures/halfred.png" };
 
-      
+    std::vector<Light*>                          m_lights;
+    Scene                                        m_scene;
+    
     std::vector<VkSemaphore> imageAvailableSemaphores; // GPU semaphore - image retrieved from swapchain and ready for rendering
     std::vector<VkSemaphore> renderFinishedSemaphores; // GPU semaphore - rendering finished and can present image
     std::vector<VkFence> inFlightFences; // CPU-GPU fence - make sure only 1 frame renders at a time

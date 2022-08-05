@@ -1,13 +1,17 @@
 #version 450
 
+struct PointLight {    
+    vec4 pos;
+	vec4 col;
+}; 
+
 layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
 	mat4 modelInvTr;
 	vec4 camPos;
-	vec4 lightPos;
-	vec4 lightCol;
+	PointLight pointlights[10];
 	float metallic;
 	float roughness;
 } ubo;
@@ -57,6 +61,8 @@ float microfacetDistrib(float roughness, vec3 n, vec3 wh) {
 void main()
 {
     vec3 normal = normalize(fragNor);
+	
+	// normal mapping
 	vec3 mappedNor = texture(texSampler2, fragUV).rgb;
 	mappedNor = normalize((2.0 * mappedNor) - 1.0);
 	mappedNor.x = clamp(mappedNor.x, 0, 1);
@@ -74,45 +80,52 @@ void main()
     // output light color of fragment
     vec3 Lo = vec3(0,0,0);
 
-	// attenuate intensity inverse square law
-	vec3 fragToLightPos = ubo.lightPos.xyz - fragPos;
-	float distanceSq = dot(fragToLightPos, fragToLightPos);
-	float inverseDistanceSq = 1.0f / distanceSq;
-	vec3 ithLightIrradiance = ubo.lightCol.rgb * inverseDistanceSq;
+	for (int i = 0; i < 10; i++) {
 
-	// get wi, wo, wh
-	vec3 wi = normalize(fragToLightPos);
-	vec3 wo = normalize(ubo.camPos.rgb - fragPos);
-	vec3 wh = normalize(wo + wi);
+		if (ubo.pointlights[i].col.x != 0 && ubo.pointlights[i].col.y != 0 && ubo.pointlights[i].col.z != 0) {
+			// attenuate intensity inverse square law
+			vec3 fragToLightPos = ubo.pointlights[i].pos.xyz - fragPos;
+			float distanceSq = dot(fragToLightPos, fragToLightPos);
+			float inverseDistanceSq = 1.0f / distanceSq;
+			vec3 ithLightIrradiance = ubo.pointlights[i].col.rgb * inverseDistanceSq;
 
-	// R term
-	vec3 R = mix(vec3(0.04), albedo, ubo.metallic);
+			// get wi, wo, wh
+			vec3 wi = normalize(fragToLightPos);
+			vec3 wo = normalize(ubo.camPos.rgb - fragPos);
+			vec3 wh = normalize(wo + wi);
 
-	// F term
-	vec3 F = fresnelReflectance(max(dot(wh, wo), 0.0), R);
+			// R term
+			vec3 R = mix(vec3(0.04), albedo, ubo.metallic);
 
-	// G term
-	float G = microfacetSelfShadow(ubo.roughness, wo, wi, normal);
+			// F term
+			vec3 F = fresnelReflectance(max(dot(wh, wo), 0.0), R);
 
-	// D term
-	float D = microfacetDistrib(ubo.roughness, normal, wh);
+			// G term
+			float G = microfacetSelfShadow(ubo.roughness, wo, wi, normal);
 
-	// compute cook-torrance
-	vec3 f_cook_torrance = vec3(0,0,0);
-	if (dot(normal, wi) >= 0.00001 && dot(normal, wo) >= 0.00001) {
-		f_cook_torrance = (D*G*F) / (4.0f * dot(normal, wo) * dot(normal, wi));
+			// D term
+			float D = microfacetDistrib(ubo.roughness, normal, wh);
+
+			// compute cook-torrance
+			vec3 f_cook_torrance = vec3(0,0,0);
+			if (dot(normal, wi) >= 0.00001 && dot(normal, wo) >= 0.00001) {
+				f_cook_torrance = (D*G*F) / (4.0f * dot(normal, wo) * dot(normal, wi));
+			}
+
+			// compute lambert weighting
+			vec3 kd = vec3(1.0f) - F;
+
+			kd *= (1.0f - ubo.metallic);
+
+			vec3 f_lambert = albedo * 0.31831015504887652430775499030746f;
+			vec3 f = kd * f_lambert + f_cook_torrance;
+
+			// accumulate total lighting on fragment
+			Lo += f * ithLightIrradiance * max(0.f, dot(wi, normal));
+		
+		}
+	
 	}
-
-	// compute lambert weighting
-	vec3 kd = vec3(1.0f) - F;
-
-	kd *= (1.0f - ubo.metallic);
-
-	vec3 f_lambert = albedo * 0.31831015504887652430775499030746f;
-	vec3 f = kd * f_lambert + f_cook_torrance;
-
-	// accumulate total lighting on fragment
-	Lo += f * ithLightIrradiance * max(0.f, dot(wi, normal));
 
 	// reinhard (HDR)
 	Lo = Lo / (Lo + vec3(1.0f, 1.0f, 1.0f));
