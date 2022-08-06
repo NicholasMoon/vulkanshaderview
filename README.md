@@ -5,6 +5,8 @@ Nick Moon
 
 ![](result2.PNG)
 
+![](result3.PNG)
+
 [X] refactor code to use class-based wrappers for vulkan constructs
 
 [X] learn and integrate imgui into rendering pipeline
@@ -12,3 +14,5 @@ Nick Moon
 [X] implement Cook-Torrance microfacet BRDF
 
 [X] implement normal mapping
+
+[X] json scene loading
