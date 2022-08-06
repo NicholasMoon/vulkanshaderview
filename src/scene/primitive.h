@@ -54,6 +54,8 @@ public:
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 
+
+
 private:
 	std::string vertexShaderFile;
 	std::string fragmentShaderFile;
@@ -114,7 +116,6 @@ public:
 	void createUniformBuffers(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
 
-	void loadMaterialFromShaders(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, DescriptorSetLayout& descriptorsetlayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
 	void toString();
 
 	
@@ -131,7 +132,7 @@ public:
 	// primitive attributes
 	Mesh*										m_geometry; // for now, don't support instancing/reusing these fields...
 	std::unique_ptr<Light>						m_light;
-	Material									m_material;
+	Material*									m_material;
 
 	// transform data
 	glm::vec3									m_translation;

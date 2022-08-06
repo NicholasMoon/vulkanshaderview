@@ -25,7 +25,7 @@ public:
 	Scene();
 	~Scene();
 
-
+	void createMaterialFromShaderFiles(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, DescriptorSetLayout& descriptorsetlayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
 
 	void loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, CommandPool& commandpool, DescriptorSetLayout& descriptorsetlayout, DescriptorPool& descriptorpool, RenderPass& renderpass, MSAABuffer& msaabuffer, uint32_t maxFramesinFlight);
 
@@ -34,6 +34,8 @@ public:
 	std::vector<std::unique_ptr<Mesh>>				m_meshes;
 	std::vector<Light*>								m_lights;
 	Camera											m_camera;
+
+	std::vector<std::unique_ptr<Material>>			m_materials;
 
 private:
 

@@ -4,14 +4,25 @@ Scene::Scene() : m_camera() {}
 
 Scene::~Scene() {}
 
+void Scene::createMaterialFromShaderFiles(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, DescriptorSetLayout& descriptorsetlayout, RenderPass& renderpass, MSAABuffer& msaabuffer) {
+	m_materials.push_back(std::make_unique<Material>());
+	int thisMaterial = m_materials.size() - 1;
+
+	m_materials[thisMaterial]->m_shader.create(vs, fs, logicaldevice);
+
+	m_materials[thisMaterial]->m_pipeline.createGraphicsPipeline(m_materials[thisMaterial]->m_shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+}
+
 void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, CommandPool& commandpool, DescriptorSetLayout& descriptorsetlayout, DescriptorPool& descriptorpool, RenderPass& renderpass, MSAABuffer& msaabuffer, uint32_t maxFramesinFlight) {
 	std::ifstream f(filePath);
 	json j = json::parse(f);
 
 	int primitive_count = 0;
 	int mesh_count = 0;
+	int shader_count = 0;
 
 	std::unordered_map<std::string, int> OBJfiles;
+	std::unordered_map<std::string, int> Shaderfiles;
 
     auto sceneData = j["scene"];
 	for (auto s : sceneData.items()) {
@@ -79,8 +90,19 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				else {
 					m_primitives[primitive_count]->m_geometry = m_meshes[OBJfiles[obj_file]].get();
 				}
+
+				// add new material only if shader hasn't been created before (NOTE: only checks fs for now)
+				if (Shaderfiles.count(fs) == 0) {
+					createMaterialFromShaderFiles(vs, fs, logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
+					Shaderfiles[fs] = shader_count;
+					m_primitives[primitive_count]->m_material = m_materials[shader_count].get();
+					shader_count++;
+				}
+				else {
+					m_primitives[primitive_count]->m_material = m_materials[Shaderfiles[fs]].get();
+				}
 				
-				m_primitives[primitive_count]->loadMaterialFromShaders(vs, fs, logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
+
 				m_primitives[primitive_count]->m_translation = glm::vec3(translate[0], translate[1], translate[2]);
 				m_primitives[primitive_count]->m_rotation = glm::vec3(rotate[0], rotate[1], rotate[2]);
 				m_primitives[primitive_count]->m_scale = glm::vec3(scale[0], scale[1], scale[2]);
@@ -144,7 +166,17 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				m_primitives[primitive_count]->m_light = std::make_unique<PointLight>();
 				m_lights.push_back(m_primitives[primitive_count]->m_light.get());
 
-				m_primitives[primitive_count]->loadMaterialFromShaders(vs, fs, logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
+				// add new material only if shader hasn't been created before (NOTE: only checks fs for now)
+				if (Shaderfiles.count(fs) == 0) {
+					createMaterialFromShaderFiles(vs, fs, logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
+					Shaderfiles[fs] = shader_count;
+					m_primitives[primitive_count]->m_material = m_materials[shader_count].get();
+					shader_count++;
+				}
+				else {
+					m_primitives[primitive_count]->m_material = m_materials[Shaderfiles[fs]].get();
+				}
+
 				m_primitives[primitive_count]->setScale(glm::vec3(0.05));
 				m_primitives[primitive_count]->m_light->m_center = glm::vec3(translate[0], translate[1], translate[2]);
 				m_primitives[primitive_count]->m_light->m_intensity = glm::vec3(lightColor[0], lightColor[1], lightColor[2]);

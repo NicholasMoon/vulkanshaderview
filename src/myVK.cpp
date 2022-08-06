@@ -216,8 +216,8 @@ void MyVK::cleanupSwapChain() {
     depthbuffer.destroyImage(logicaldevice);
 
     // handle graphics pipeline
-    for (int i = 0; i < m_scene.m_primitives.size(); ++i) {
-        m_scene.m_primitives[i]->m_material.m_pipeline.destroyGraphicsPipeline(logicaldevice);
+    for (int i = 0; i < m_scene.m_materials.size(); ++i) {
+        m_scene.m_materials[i]->m_pipeline.destroyGraphicsPipeline(logicaldevice);
     }
 
     // handle render pass
@@ -247,8 +247,8 @@ void MyVK::recreateSwapChain() {
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
-    for (int i = 0; i < m_scene.m_primitives.size(); ++i) {
-        m_scene.m_primitives[i]->m_material.m_pipeline.createGraphicsPipeline(m_scene.m_primitives[i]->m_material.m_shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+    for (int i = 0; i < m_scene.m_materials.size(); ++i) {
+        m_scene.m_materials[i]->m_pipeline.createGraphicsPipeline(m_scene.m_materials[i]->m_shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
     }
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
@@ -286,8 +286,8 @@ void MyVK::cleanup() {
     m_gui.destroy(logicaldevice);
 
     // handle shader program
-    for (int i = 0; i < m_scene.m_primitives.size(); ++i) {
-        m_scene.m_primitives[i]->m_material.m_shader.destroy(logicaldevice);
+    for (int i = 0; i < m_scene.m_materials.size(); ++i) {
+        m_scene.m_materials[i]->m_shader.destroy(logicaldevice);
     }
 
     // handle rest of myVK items

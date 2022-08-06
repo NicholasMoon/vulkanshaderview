@@ -6,11 +6,7 @@ m_texture(), m_vertexbuffer(), m_indexbuffer(), m_descriptorsets()
 {};
 
 
-void Primitive::loadMaterialFromShaders(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, DescriptorSetLayout& descriptorsetlayout, RenderPass& renderpass, MSAABuffer& msaabuffer) {
-    m_material.m_shader.create(vs, fs, logicaldevice);
 
-    m_material.m_pipeline.createGraphicsPipeline(m_material.m_shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
-}
 
 void Primitive::toString() {
 
