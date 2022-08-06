@@ -3,18 +3,10 @@
 
 MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(), 
                depthbuffer(), msaabuffer(), descriptorpool(), descriptorsetlayout(), commandpool(),
-               renderpass(), m_camera()
+               renderpass()
                
 {
-    m_camera.m_eye = glm::vec3(0, 2.649, 34.263);
-    m_camera.m_ref = glm::vec3(0, 2.472, 0);
-    m_camera.m_up = glm::vec3(0, 1, 0);
-    m_camera.m_fovy = glm::radians(19.5);
-    m_camera.m_width = WIDTH;
-    m_camera.m_height = HEIGHT;
-    m_camera.recalculateAspectRatio();
-    m_camera.m_near = 0.1f;
-    m_camera.m_far = 80.0f;
+    
 }
 
 MyVK::~MyVK() {}
@@ -97,14 +89,14 @@ void MyVK::initVulkan() {
 
     m_scene.loadSceneFromJSON(m_scenefile, logicaldevice, physicaldevice, swapchain, commandpool, descriptorsetlayout, descriptorpool, renderpass, msaabuffer, MAX_FRAMES_IN_FLIGHT);
 
-    m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool, &m_scene.m_primitives, &m_camera);
+    m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool, &m_scene.m_primitives, &m_scene.m_camera);
 
     commandpool.createCommandBuffers(MAX_FRAMES_IN_FLIGHT, logicaldevice);
     createSyncObjects();
 }
 
 void MyVK::updateUniformBuffer(uint32_t currentImage) {
-    m_camera.recalculateAspectRatio();
+    m_scene.m_camera.recalculateAspectRatio();
 
     static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -117,11 +109,11 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
             m_scene.m_primitives[i]->setTranslation(m_scene.m_primitives[i]->m_light->m_center);
         }
         m_scene.m_primitives[i]->m_ubo.model = m_scene.m_primitives[i]->m_modelMatrix;
-        m_scene.m_primitives[i]->m_ubo.view = glm::lookAt(m_camera.m_eye, m_camera.m_ref, m_camera.m_up);
-        m_scene.m_primitives[i]->m_ubo.proj = glm::perspective(m_camera.m_fovy, m_camera.m_aspect, m_camera.m_near, m_camera.m_far);
+        m_scene.m_primitives[i]->m_ubo.view = glm::lookAt(m_scene.m_camera.m_eye, m_scene.m_camera.m_ref, m_scene.m_camera.m_up);
+        m_scene.m_primitives[i]->m_ubo.proj = glm::perspective(m_scene.m_camera.m_fovy, m_scene.m_camera.m_aspect, m_scene.m_camera.m_near, m_scene.m_camera.m_far);
         m_scene.m_primitives[i]->m_ubo.proj[1][1] *= -1;
         m_scene.m_primitives[i]->m_ubo.modelInvTr = m_scene.m_primitives[i]->m_modelMatrixInvTrans;
-        m_scene.m_primitives[i]->m_ubo.camPos = glm::vec4(m_camera.m_eye, 0);
+        m_scene.m_primitives[i]->m_ubo.camPos = glm::vec4(m_scene.m_camera.m_eye, 0);
         for (int j = 0; j < m_scene.m_lights.size(); ++j) {
             m_scene.m_primitives[i]->m_ubo.pointlights[j].lightPos = glm::vec4(m_scene.m_lights[j]->m_center, 0);
             m_scene.m_primitives[i]->m_ubo.pointlights[j].lightCol = glm::vec4(m_scene.m_lights[j]->m_intensity, 0);
@@ -266,9 +258,9 @@ void MyVK::recreateSwapChain() {
     m_gui.resizeSwapchainRecreate(logicaldevice, physicaldevice, swapchain);
 
     // reset camera attributes
-    m_camera.m_width = width;
-    m_camera.m_height = height;
-    m_camera.recalculateAspectRatio();
+    m_scene.m_camera.m_width = width;
+    m_scene.m_camera.m_height = height;
+    m_scene.m_camera.recalculateAspectRatio();
 }
 
 void MyVK::mainLoop() {

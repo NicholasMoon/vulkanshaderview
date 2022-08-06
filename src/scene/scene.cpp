@@ -1,6 +1,6 @@
 #include "scene.h"
 
-Scene::Scene() {}
+Scene::Scene() : m_camera() {}
 
 Scene::~Scene() {}
 
@@ -9,6 +9,9 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 	json j = json::parse(f);
 
 	int primitive_count = 0;
+	int mesh_count = 0;
+
+	std::unordered_map<std::string, int> OBJfiles;
 
     auto sceneData = j["scene"];
 	for (auto s : sceneData.items()) {
@@ -27,6 +30,16 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 			std::cout << "   fovy: " << fovy << std::endl;
 			std::cout << "   width: " << width << std::endl;
 			std::cout << "   height: " << height << std::endl;
+
+			m_camera.m_eye = glm::vec3(eye[0], eye[1], eye[2]);
+			m_camera.m_ref = glm::vec3(ref[0], ref[1], ref[2]);
+			m_camera.m_up = glm::vec3(up[0], up[1], up[2]);
+			m_camera.m_fovy = glm::radians(fovy.get<float>());
+			m_camera.m_width = width;
+			m_camera.m_height = height;
+			m_camera.recalculateAspectRatio();
+			m_camera.m_near = 0.1f;
+			m_camera.m_far = 30.0f;
 		}
 		else if (s.key() == "primitives") {
 			for (auto p : s.value().items()) {
@@ -55,7 +68,18 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				std::cout << "   normal_map: " << normal_map << std::endl;
 
 				m_primitives.push_back(std::make_unique<Primitive>());
-				m_primitives[primitive_count]->loadGeometryFromOBJ(obj_file);
+
+				if (OBJfiles.count(obj_file) == 0) {
+					m_meshes.push_back(std::make_unique<Mesh>());
+					m_meshes[mesh_count]->loadOBJ(obj_file);
+					OBJfiles[obj_file] = mesh_count;
+					m_primitives[primitive_count]->m_geometry = m_meshes[mesh_count].get();
+					mesh_count++;
+				}
+				else {
+					m_primitives[primitive_count]->m_geometry = m_meshes[OBJfiles[obj_file]].get();
+				}
+				
 				m_primitives[primitive_count]->loadMaterialFromShaders(vs, fs, logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
 				m_primitives[primitive_count]->m_translation = glm::vec3(translate[0], translate[1], translate[2]);
 				m_primitives[primitive_count]->m_rotation = glm::vec3(rotate[0], rotate[1], rotate[2]);
@@ -79,7 +103,7 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 			}
 		}
 		else if (s.key() == "lights") {
-			std::string obj_file = "../models/sphere.obj";
+			std::string obj_file = "../models/light.obj";
 			std::string vs = "../shaders/vertshader.spv";
 			std::string fs = "../shaders/light.spv";
 			std::string albedo_map = "../textures/white.png";
@@ -105,9 +129,21 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				
 
 				m_primitives.push_back(std::make_unique<Primitive>());
+
+				if (OBJfiles.count(obj_file) == 0) {
+					m_meshes.push_back(std::make_unique<Mesh>());
+					m_meshes[mesh_count]->loadOBJ(obj_file);
+					OBJfiles[obj_file] = mesh_count;
+					m_primitives[primitive_count]->m_geometry = m_meshes[mesh_count].get();
+					mesh_count++;
+				}
+				else {
+					m_primitives[primitive_count]->m_geometry = m_meshes[OBJfiles[obj_file]].get();
+				}
+
 				m_primitives[primitive_count]->m_light = std::make_unique<PointLight>();
 				m_lights.push_back(m_primitives[primitive_count]->m_light.get());
-				m_primitives[primitive_count]->loadGeometryFromOBJ(obj_file);
+
 				m_primitives[primitive_count]->loadMaterialFromShaders(vs, fs, logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
 				m_primitives[primitive_count]->setScale(glm::vec3(0.05));
 				m_primitives[primitive_count]->m_light->m_center = glm::vec3(translate[0], translate[1], translate[2]);

@@ -114,7 +114,6 @@ public:
 	void createUniformBuffers(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
 
-	void loadGeometryFromOBJ(std::string& filePath);
 	void loadMaterialFromShaders(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, DescriptorSetLayout& descriptorsetlayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
 	void toString();
 
@@ -130,7 +129,7 @@ public:
 	void recalculateModelMatrix();
 
 	// primitive attributes
-	Mesh										m_geometry; // for now, don't support instancing/reusing these fields...
+	Mesh*										m_geometry; // for now, don't support instancing/reusing these fields...
 	std::unique_ptr<Light>						m_light;
 	Material									m_material;
 

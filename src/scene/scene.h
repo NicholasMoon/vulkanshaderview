@@ -14,6 +14,7 @@
 #include "../render/renderpass.h"
 #include "../image/msaabuffer.h"
 #include "../device/logicaldevice.h"
+#include "camera/camera.h"
 
 #include "primitive.h"
 
@@ -30,7 +31,9 @@ public:
 
 	// scene data
 	std::vector<std::unique_ptr<Primitive>>			m_primitives;
+	std::vector<std::unique_ptr<Mesh>>				m_meshes;
 	std::vector<Light*>								m_lights;
+	Camera											m_camera;
 
 private:
 

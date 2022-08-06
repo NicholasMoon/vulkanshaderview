@@ -100,11 +100,11 @@ private:
     
     RenderPass                      renderpass;
 
-    Camera                          m_camera;
+
     
     GUI                             m_gui;
 
-    std::string                     m_scenefile = "../scenes/cornellbox.json";
+    std::string                     m_scenefile = "../scenes/bunny.json";
 
     
     Scene                                        m_scene;

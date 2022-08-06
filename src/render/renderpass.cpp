@@ -123,7 +123,7 @@ void RenderPass::executeRenderPass(CommandPool& commandpool, uint32_t bufferInde
 
         vkCmdBindDescriptorSets(commandpool.vkCommandBuffers[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, primitives[meshIndex]->m_material.m_pipeline.vkPipelineLayout, 0, 1, &primitives[meshIndex]->m_descriptorsets.vkDescriptorSets[bufferIndex], 0, nullptr);
 
-        vkCmdDrawIndexed(commandpool.vkCommandBuffers[bufferIndex], static_cast<uint32_t>(primitives[meshIndex]->m_geometry.indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
+        vkCmdDrawIndexed(commandpool.vkCommandBuffers[bufferIndex], static_cast<uint32_t>(primitives[meshIndex]->m_geometry->indices.size()), 1, 0, 0, 0); // vertCt, instCt, firstVert, firstInst
     }
 
 

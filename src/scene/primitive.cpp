@@ -6,10 +6,6 @@ m_texture(), m_vertexbuffer(), m_indexbuffer(), m_descriptorsets()
 {};
 
 
-void Primitive::loadGeometryFromOBJ(std::string& filePath) {
-    m_geometry.loadOBJ(filePath);
-}
-
 void Primitive::loadMaterialFromShaders(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, DescriptorSetLayout& descriptorsetlayout, RenderPass& renderpass, MSAABuffer& msaabuffer) {
     m_material.m_shader.create(vs, fs, logicaldevice);
 
@@ -17,12 +13,12 @@ void Primitive::loadMaterialFromShaders(std::string& vs, std::string& fs, Logica
 }
 
 void Primitive::toString() {
-    m_geometry.toString();
+
 }
 
 // creates vertex buffer to store vert data
 void Primitive::createVertexBuffer(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool) {
-    m_vertexbuffer.vkBufferSize = sizeof(m_geometry.vertices[0]) * m_geometry.vertices.size();
+    m_vertexbuffer.vkBufferSize = sizeof(m_geometry->vertices[0]) * m_geometry->vertices.size();
 
     // create staging buffer
     DataBuffer stagingBuffer(m_vertexbuffer.vkBufferSize);
@@ -30,7 +26,7 @@ void Primitive::createVertexBuffer(LogicalDevice& logicaldevice, PhysicalDevice&
 
     void* data;
     vkMapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, 0, m_vertexbuffer.vkBufferSize, 0, &data);
-    memcpy(data, m_geometry.vertices.data(), (size_t)m_vertexbuffer.vkBufferSize);
+    memcpy(data, m_geometry->vertices.data(), (size_t)m_vertexbuffer.vkBufferSize);
     vkUnmapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory);
 
     // create actual buffer
@@ -44,14 +40,14 @@ void Primitive::createVertexBuffer(LogicalDevice& logicaldevice, PhysicalDevice&
 
 // creates index buffer to store vert index data
 void Primitive::createIndexBuffer(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool) {
-    m_indexbuffer.vkBufferSize = sizeof(m_geometry.indices[0]) * m_geometry.indices.size();
+    m_indexbuffer.vkBufferSize = sizeof(m_geometry->indices[0]) * m_geometry->indices.size();
 
     DataBuffer stagingBuffer(m_indexbuffer.vkBufferSize);
     stagingBuffer.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
 
     void* data;
     vkMapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory, 0, m_indexbuffer.vkBufferSize, 0, &data);
-    memcpy(data, m_geometry.indices.data(), (size_t)m_indexbuffer.vkBufferSize);
+    memcpy(data, m_geometry->indices.data(), (size_t)m_indexbuffer.vkBufferSize);
     vkUnmapMemory(logicaldevice.device, stagingBuffer.vkBufferMemory);
 
     m_indexbuffer.createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, logicaldevice, physicaldevice);
