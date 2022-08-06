@@ -54,7 +54,7 @@ public:
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 
-
+	DescriptorSetLayout             descriptorsetlayout;
 
 private:
 	std::string vertexShaderFile;

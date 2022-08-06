@@ -152,6 +152,8 @@ void ShaderProgram::create(LogicalDevice& logicaldevice) {
     // get binding/attrib description for our vertices
     bindingDescription = Vertex::getBindingDescription();
     attributeDescriptions = Vertex::getAttributeDescriptions();
+
+    descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
 }
 
 // read file as binary data and fill vector with bytes
@@ -197,6 +199,7 @@ void ShaderProgram::destroyShaderModules(LogicalDevice& logicaldevice) {
 
 void ShaderProgram::destroy(LogicalDevice& logicaldevice) {
     destroyShaderModules(logicaldevice);
+    descriptorsetlayout.destroyDescriptorSetLayout(logicaldevice);
 }
 
 

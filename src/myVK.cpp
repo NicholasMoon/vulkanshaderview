@@ -2,7 +2,7 @@
 
 
 MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(), 
-               depthbuffer(), msaabuffer(), descriptorpool(), descriptorsetlayout(), commandpool(),
+               depthbuffer(), msaabuffer(), descriptorpool(), commandpool(),
                renderpass()
                
 {
@@ -73,7 +73,7 @@ void MyVK::initVulkan() {
 
     
 
-    descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
+    
 
     //graphicspipeline.createGraphicsPipeline(m_shaderGGX, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
     commandpool.createCommandPool(physicaldevice, logicaldevice, surface);
@@ -87,7 +87,7 @@ void MyVK::initVulkan() {
 
     descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
 
-    m_scene.loadSceneFromJSON(m_scenefile, logicaldevice, physicaldevice, swapchain, commandpool, descriptorsetlayout, descriptorpool, renderpass, msaabuffer, MAX_FRAMES_IN_FLIGHT);
+    m_scene.loadSceneFromJSON(m_scenefile, logicaldevice, physicaldevice, swapchain, commandpool, descriptorpool, renderpass, msaabuffer, MAX_FRAMES_IN_FLIGHT);
 
     m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool, &m_scene.m_primitives, &m_scene.m_camera);
 
@@ -248,7 +248,7 @@ void MyVK::recreateSwapChain() {
     swapchain.createImageViews(logicaldevice);
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
     for (int i = 0; i < m_scene.m_materials.size(); ++i) {
-        m_scene.m_materials[i]->m_pipeline.createGraphicsPipeline(m_scene.m_materials[i]->m_shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
+        m_scene.m_materials[i]->m_pipeline.createGraphicsPipeline(m_scene.m_materials[i]->m_shader, swapchain, logicaldevice, m_scene.m_materials[i]->m_shader.descriptorsetlayout, renderpass, msaabuffer);
     }
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
@@ -299,7 +299,7 @@ void MyVK::cleanup() {
         }
     }
     descriptorpool.destroyDescriptorPool(logicaldevice);
-    descriptorsetlayout.destroyDescriptorSetLayout(logicaldevice);
+    
     for (int q = 0; q < m_scene.m_primitives.size(); ++q) {
         m_scene.m_primitives[q]->m_indexbuffer.destroyBuffer(logicaldevice);
         m_scene.m_primitives[q]->m_vertexbuffer.destroyBuffer(logicaldevice);

@@ -25,9 +25,9 @@ public:
 	Scene();
 	~Scene();
 
-	void createMaterialFromShaderFiles(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, DescriptorSetLayout& descriptorsetlayout, RenderPass& renderpass, MSAABuffer& msaabuffer);
+	void createMaterialFromShaderFiles(std::string& vs, std::string& fs, LogicalDevice& logicaldevice, Swapchain& swapchain, RenderPass& renderpass, MSAABuffer& msaabuffer);
 
-	void loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, CommandPool& commandpool, DescriptorSetLayout& descriptorsetlayout, DescriptorPool& descriptorpool, RenderPass& renderpass, MSAABuffer& msaabuffer, uint32_t maxFramesinFlight);
+	void loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, CommandPool& commandpool, DescriptorPool& descriptorpool, RenderPass& renderpass, MSAABuffer& msaabuffer, uint32_t maxFramesinFlight);
 
 	// scene data
 	std::vector<std::unique_ptr<Primitive>>			m_primitives;

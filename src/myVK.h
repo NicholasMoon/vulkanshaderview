@@ -95,7 +95,7 @@ private:
     DepthBuffer                     depthbuffer;
     MSAABuffer                      msaabuffer;
     DescriptorPool                  descriptorpool;
-    DescriptorSetLayout             descriptorsetlayout;
+    
     CommandPool                     commandpool;
     
     RenderPass                      renderpass;
