@@ -1,6 +1,10 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+
+#include <nlohmann/json.hpp>
+
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -13,6 +17,8 @@
 
 #include "primitive.h"
 
+using json = nlohmann::json;
+
 class Scene {
 public:
 	Scene();
@@ -20,15 +26,16 @@ public:
 
 
 
-	void loadSceneFromJSON(std::string& filePath);
+	void loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, CommandPool& commandpool, DescriptorSetLayout& descriptorsetlayout, DescriptorPool& descriptorpool, RenderPass& renderpass, MSAABuffer& msaabuffer, uint32_t maxFramesinFlight);
 
 	// scene data
 	std::vector<std::unique_ptr<Primitive>>			m_primitives;
-
+	std::vector<Light*>								m_lights;
 
 private:
 
 };
 
+void recursive_iterate(const json& j);
 
 #endif

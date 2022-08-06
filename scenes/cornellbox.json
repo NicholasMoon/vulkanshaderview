@@ -1,0 +1,192 @@
+{
+	"scene" : {
+	  "camera" : {
+		"ref" : [0, 2.472, 0],
+		"eye" : [0, 2.649, 34.263],
+		"worldUp" : [0, 1, 0],
+		"fov" : 19.5,
+		"width" : 1280,
+		"height": 720
+	  },
+	  "primitives" : [
+		{
+		  "name" : "Floor",
+		  "obj_file" : "../models/mayaplane.obj",
+		  "material" : "matteWhite",
+		  "transform" : {
+			"translate" : [0, -2.5, 0],
+			"rotate" : [0, 0, 0],
+			"scale" : [1, 1, 1]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/white.png",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "LeftWall",
+		  "obj_file" : "../models/mayaplane.obj",
+		  "material" : "matteWhite",
+		  "transform" : {
+			"translate" : [5,2.5,0],
+			"rotate" : [0, 0, 90],
+			"scale" : [1, 1, 1]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/red.png",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "RightWall",
+		  "obj_file" : "../models/mayaplane.obj",
+		  "material" : "matteWhite",
+		  "transform" : {
+			"translate" : [-5, 2.5, 0],
+			"rotate" : [0, 0, -90],
+			"scale" : [1, 1, 1]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/green.png",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "BackWall",
+		  "obj_file" : "../models/mayaplane.obj",
+		  "material" : "matteWhite",
+		  "transform" : {
+			"translate" : [0, 2.5, -5],
+			"rotate" : [90, 0, 0],
+			"scale" : [1, 1, 1]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/white.png",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "Ceiling",
+		  "obj_file" : "../models/mayaplane.obj",
+		  "material" : "matteWhite",
+		  "transform" : {
+			"translate" : [0, 7.5, 0],
+			"rotate" : [180, 0, 0],
+			"scale" : [1, 1, 1]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/white.png",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "bunny0",
+		  "obj_file" : "../models/stanford-bunny.obj",
+		  "material" : "matteRed",
+		  "transform" : {
+			"translate" : [-3.1,-1,-3.25],
+			"rotate" : [0, 45, 0],
+			"scale" : [2, 2, 2]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/honeycombs.jpg",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "bunny1",
+		  "obj_file" : "../models/stanford-bunny.obj",
+		  "material" : "matteRed",
+		  "transform" : {
+			"translate" : [3.25,-1,-3.5],
+			"rotate" : [0, -23, 0],
+			"scale" : [2, 2, 2]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/brick.jpg",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "bunny2",
+		  "obj_file" : "../models/stanford-bunny.obj",
+		  "material" : "matteRed",
+		  "transform" : {
+			"translate" : [1.75,-1,0.5],
+			"rotate" : [0, 81, 0],
+			"scale" : [2, 2, 2]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/honeycombs.jpg",
+		  "normal_map" : "../textures/norm0.png"
+		},
+		{
+		  "name" : "bunny3",
+		  "obj_file" : "../models/stanford-bunny.obj",
+		  "material" : "matteRed",
+		  "transform" : {
+			"translate" : [-2,-1,1.37],
+			"rotate" : [0, 12, 0],
+			"scale" : [2, 2, 2]
+		  },
+		  "vs" : "../shaders/vertshader.spv",
+		  "fs" : "../shaders/pbr.spv",
+		  "albedo_map" : "../textures/alien_rock.jpg",
+		  "normal_map" : "../textures/norm0.png"
+		}
+	  ],
+	  "lights" : [
+		{
+		  "name" : "Light Source",
+		  "type" : "PointLight0",
+		  "lightColor" : [2,2,2],
+		  "transform" : {
+			"translate" : [1,1,1],
+			"rotate" : [0,0,0],
+			"scale" : [0, 0, 1]
+		  }
+		},
+		{
+		  "name" : "Light Source",
+		  "type" : "PointLight1",
+		  "lightColor" : [2,2,2],
+		  "transform" : {
+			"translate" : [1,1,1],
+			"rotate" : [0,0,0],
+			"scale" : [0, 0, 1]
+		  }
+		},
+		{
+		  "name" : "Light Source",
+		  "type" : "PointLight2",
+		  "lightColor" : [1,1,1],
+		  "transform" : {
+			"translate" : [2,2,2],
+			"rotate" : [0,0,0],
+			"scale" : [0, 0, 1]
+		  }
+		}
+	  ],
+	  "materials" : [
+		{
+		  "type" : "MatteMaterial",
+		  "name" : "matteWhite",
+			"Kd" : [0.85, 0.81, 0.78],
+		  "sigma": 0
+		},
+		{
+		  "type" : "MatteMaterial",
+		  "name" : "matteRed",
+		  "Kd" : [0.63, 0.065, 0.05],
+		  "sigma": 0
+		},
+		{
+		  "type" : "MatteMaterial",
+		  "name" : "matteGreen",
+		  "Kd" : [0.14, 0.45, 0.091],
+		  "sigma": 0
+		}
+	  ]
+	}
+}

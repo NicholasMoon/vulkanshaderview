@@ -6,15 +6,15 @@ MyVK::MyVK() : vulkaninstance(), physicaldevice(), logicaldevice(), swapchain(),
                renderpass(), m_camera()
                
 {
-    m_camera.m_eye = glm::vec3(0, 1.75, 5.5);
-    m_camera.m_ref = glm::vec3(0, 0, 0);
+    m_camera.m_eye = glm::vec3(0, 2.649, 34.263);
+    m_camera.m_ref = glm::vec3(0, 2.472, 0);
     m_camera.m_up = glm::vec3(0, 1, 0);
-    m_camera.m_fovy = glm::radians(45.0);
+    m_camera.m_fovy = glm::radians(19.5);
     m_camera.m_width = WIDTH;
     m_camera.m_height = HEIGHT;
     m_camera.recalculateAspectRatio();
     m_camera.m_near = 0.1f;
-    m_camera.m_far = 30.0f;
+    m_camera.m_far = 80.0f;
 }
 
 MyVK::~MyVK() {}
@@ -66,14 +66,6 @@ void MyVK::createSyncObjects() {
 // vulkan initialization
 void MyVK::initVulkan() {
 
-    /*for (int i = 0; i < 5; ++i) {
-        vs_paths.push_back("../shaders/vertshader.spv");
-        fs_paths.push_back("../shaders/pbr.spv");
-        model_paths.push_back("../models/sphere.obj");
-        texture_paths.push_back("../textures/red.png");
-        normalmap_paths.push_back("../textures/norm0.png");
-    }*/
-
     vulkaninstance.createInstance();
     vulkaninstance.setupDebugMessenger();
     surface.createSurface(vulkaninstance, window);
@@ -95,22 +87,6 @@ void MyVK::initVulkan() {
     commandpool.createCommandPool(physicaldevice, logicaldevice, surface);
     
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
-
-    for (int u = 0; u < model_paths.size(); ++u) {
-        m_scene.m_primitives.push_back(std::make_unique<Primitive>());
-        m_scene.m_primitives[u]->loadGeometryFromOBJ(model_paths[u]);
-        m_scene.m_primitives[u]->loadMaterialFromShaders(vs_paths[u], fs_paths[u], logicaldevice, swapchain, descriptorsetlayout, renderpass, msaabuffer);
-        if (u > 1) {
-            m_scene.m_primitives[u]->setTranslation(glm::vec3(2 * u - 10, 0, -5));
-        }
-        if (fs_paths[u] == "../shaders/light.spv") {
-            m_scene.m_primitives[u]->m_light = std::make_unique<PointLight>();
-            m_lights.push_back(m_scene.m_primitives[u]->m_light.get());
-            m_scene.m_primitives[u]->setScale(glm::vec3(0.05));
-            m_scene.m_primitives[u]->m_light->m_center = glm::vec3(u,u,u);
-            m_scene.m_primitives[u]->m_light->m_intensity = glm::vec3(2, 2, 2);
-        }
-    }
     
     
     depthbuffer.createDepthResources(swapchain, msaabuffer.msaaSamples, physicaldevice, logicaldevice, commandpool);
@@ -119,23 +95,9 @@ void MyVK::initVulkan() {
 
     descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
 
+    m_scene.loadSceneFromJSON(m_scenefile, logicaldevice, physicaldevice, swapchain, commandpool, descriptorsetlayout, descriptorpool, renderpass, msaabuffer, MAX_FRAMES_IN_FLIGHT);
+
     m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool, &m_scene.m_primitives, &m_camera);
-
-    for (int w = 0; w < m_scene.m_primitives.size(); ++w) {
-        // NOTE: currently no texture sharing between primitives
-        m_scene.m_primitives[w]->m_texture.createTextureImage(texture_paths[w], logicaldevice, physicaldevice, commandpool);
-        m_scene.m_primitives[w]->m_texture.createTextureImageView(logicaldevice);
-
-        m_scene.m_primitives[w]->m_texture.createTextureSampler(logicaldevice, physicaldevice);
-        m_scene.m_primitives[w]->m_normalmap.createTextureImage(normalmap_paths[w], logicaldevice, physicaldevice, commandpool);
-        m_scene.m_primitives[w]->m_normalmap.createTextureImageView(logicaldevice);
-        m_scene.m_primitives[w]->m_normalmap.createTextureSampler(logicaldevice, physicaldevice);
-
-        m_scene.m_primitives[w]->createVertexBuffer(logicaldevice, physicaldevice, commandpool);
-        m_scene.m_primitives[w]->createIndexBuffer(logicaldevice, physicaldevice, commandpool);
-        m_scene.m_primitives[w]->createUniformBuffers(MAX_FRAMES_IN_FLIGHT, logicaldevice, physicaldevice);
-        m_scene.m_primitives[w]->m_descriptorsets.createDescriptorSets(MAX_FRAMES_IN_FLIGHT, logicaldevice, descriptorpool, descriptorsetlayout, m_scene.m_primitives[w]->m_uniformbuffers, m_scene.m_primitives[w]->m_texture, m_scene.m_primitives[w]->m_normalmap);
-    }
 
     commandpool.createCommandBuffers(MAX_FRAMES_IN_FLIGHT, logicaldevice);
     createSyncObjects();
@@ -160,9 +122,9 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
         m_scene.m_primitives[i]->m_ubo.proj[1][1] *= -1;
         m_scene.m_primitives[i]->m_ubo.modelInvTr = m_scene.m_primitives[i]->m_modelMatrixInvTrans;
         m_scene.m_primitives[i]->m_ubo.camPos = glm::vec4(m_camera.m_eye, 0);
-        for (int j = 0; j < m_lights.size(); ++j) {
-            m_scene.m_primitives[i]->m_ubo.pointlights[j].lightPos = glm::vec4(m_lights[j]->m_center, 0);
-            m_scene.m_primitives[i]->m_ubo.pointlights[j].lightCol = glm::vec4(m_lights[j]->m_intensity, 0);
+        for (int j = 0; j < m_scene.m_lights.size(); ++j) {
+            m_scene.m_primitives[i]->m_ubo.pointlights[j].lightPos = glm::vec4(m_scene.m_lights[j]->m_center, 0);
+            m_scene.m_primitives[i]->m_ubo.pointlights[j].lightCol = glm::vec4(m_scene.m_lights[j]->m_intensity, 0);
         }
         
 
@@ -293,7 +255,7 @@ void MyVK::recreateSwapChain() {
     swapchain.createSwapChain(physicaldevice, logicaldevice, surface, window);
     swapchain.createImageViews(logicaldevice);
     renderpass.createRenderPass(swapchain, physicaldevice, logicaldevice, depthbuffer, msaabuffer);
-    for (int i = 0; i < fs_paths.size(); ++i) {
+    for (int i = 0; i < m_scene.m_primitives.size(); ++i) {
         m_scene.m_primitives[i]->m_material.m_pipeline.createGraphicsPipeline(m_scene.m_primitives[i]->m_material.m_shader, swapchain, logicaldevice, descriptorsetlayout, renderpass, msaabuffer);
     }
     msaabuffer.createColorResources(swapchain, logicaldevice, physicaldevice);
@@ -332,12 +294,12 @@ void MyVK::cleanup() {
     m_gui.destroy(logicaldevice);
 
     // handle shader program
-    for (int i = 0; i < fs_paths.size(); ++i) {
+    for (int i = 0; i < m_scene.m_primitives.size(); ++i) {
         m_scene.m_primitives[i]->m_material.m_shader.destroy(logicaldevice);
     }
 
     // handle rest of myVK items
-    for (int q = 0; q < model_paths.size(); ++q) {
+    for (int q = 0; q < m_scene.m_primitives.size(); ++q) {
         m_scene.m_primitives[q]->m_texture.destroyImage(logicaldevice);
         m_scene.m_primitives[q]->m_normalmap.destroyImage(logicaldevice);
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -346,7 +308,7 @@ void MyVK::cleanup() {
     }
     descriptorpool.destroyDescriptorPool(logicaldevice);
     descriptorsetlayout.destroyDescriptorSetLayout(logicaldevice);
-    for (int q = 0; q < model_paths.size(); ++q) {
+    for (int q = 0; q < m_scene.m_primitives.size(); ++q) {
         m_scene.m_primitives[q]->m_indexbuffer.destroyBuffer(logicaldevice);
         m_scene.m_primitives[q]->m_vertexbuffer.destroyBuffer(logicaldevice);
     }

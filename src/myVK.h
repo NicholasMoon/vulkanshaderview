@@ -104,14 +104,9 @@ private:
     
     GUI                             m_gui;
 
+    std::string                     m_scenefile = "../scenes/cornellbox.json";
 
-    std::vector<std::string>                     vs_paths = { "../shaders/vertshader.spv", "../shaders/vertshader.spv", "../shaders/vertshader.spv", "../shaders/vertshader.spv", "../shaders/vertshader.spv" };
-    std::vector<std::string>                     fs_paths = { "../shaders/pbr.spv", "../shaders/light.spv", "../shaders/light.spv", "../shaders/light.spv", "../shaders/light.spv" };
-    std::vector<std::string>                     model_paths = { "../models/stanford-bunny.obj", "../models/sphere.obj", "../models/sphere.obj", "../models/sphere.obj", "../models/sphere.obj" };
-    std::vector<std::string>                     texture_paths = { "../textures/white.png", "../textures/white.png", "../textures/white.png", "../textures/white.png", "../textures/white.png" };
-    std::vector<std::string>                     normalmap_paths = { "../textures/norm0.png", "../textures/halfred.png", "../textures/halfred.png", "../textures/halfred.png", "../textures/halfred.png" };
-
-    std::vector<Light*>                          m_lights;
+    
     Scene                                        m_scene;
     
     std::vector<VkSemaphore> imageAvailableSemaphores; // GPU semaphore - image retrieved from swapchain and ready for rendering

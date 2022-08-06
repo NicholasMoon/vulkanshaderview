@@ -162,9 +162,9 @@ IMGUI_API void GUI::showGUI(bool* p_open) {
     if (ImGui::CollapsingHeader("Camera"))
     {
         // Camera
-        ImGui::SliderFloat("camera eye X", &camera_ptr_imgui->m_eye.x, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("camera eye Y", &camera_ptr_imgui->m_eye.y, -10.0f, 10.0f, "%.3f");
-        ImGui::SliderFloat("camera eye Z", &camera_ptr_imgui->m_eye.z, -10.0f, 10.0f, "%.3f");
+        ImGui::SliderFloat("camera eye X", &camera_ptr_imgui->m_eye.x, -40.0f, 40.0f, "%.3f");
+        ImGui::SliderFloat("camera eye Y", &camera_ptr_imgui->m_eye.y, -40.0f, 40.0f, "%.3f");
+        ImGui::SliderFloat("camera eye Z", &camera_ptr_imgui->m_eye.z, -40.0f, 40.0f, "%.3f");
 
         ImGui::SliderFloat("camera ref X", &camera_ptr_imgui->m_ref.x, -10.0f, 10.0f, "%.3f");
         ImGui::SliderFloat("camera ref Y", &camera_ptr_imgui->m_ref.y, -10.0f, 10.0f, "%.3f");
