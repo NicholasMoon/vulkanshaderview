@@ -182,8 +182,8 @@ IMGUI_API void GUI::showGUI(bool* p_open) {
             if ((*scene_ptr_imgui)[i]->m_light == nullptr) {
                 std::string label_metallic = "metallic " + std::to_string(i);
                 std::string label_roughness = "roughness " + std::to_string(i);
-                ImGui::SliderFloat(label_metallic.c_str(), &((*scene_ptr_imgui)[i]->m_ubo.metallic), 0.0f, 1.0f, "%.3f");
-                ImGui::SliderFloat(label_roughness.c_str(), &((*scene_ptr_imgui)[i]->m_ubo.roughness), 0.0f, 1.0f, "%.3f");
+                ImGui::SliderFloat(label_metallic.c_str(), &((*scene_ptr_imgui)[i]->m_ubo_per_primitive.metallic), 0.0f, 1.0f, "%.3f");
+                ImGui::SliderFloat(label_roughness.c_str(), &((*scene_ptr_imgui)[i]->m_ubo_per_primitive.roughness), 0.0f, 1.0f, "%.3f");
             }
         }
     }

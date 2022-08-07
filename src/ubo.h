@@ -14,22 +14,18 @@ struct PointLight_ubo {
     alignas(16) glm::vec4 lightCol;
 };
 
-struct UniformBufferObject {
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
+struct UBO_PerRenderPass {
+    alignas(16) glm::mat4 view_projection;
+    alignas(16) glm::vec4 camera_position;
 };
 
-struct UBO_pbr_spv : UniformBufferObject {
+struct UBO_PerPrimitive {
+    alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 modelInvTr;
-    alignas(16) glm::vec4 camPos;
     alignas(16) PointLight_ubo pointlights[10];
     alignas(4)  glm::float32 metallic;
     alignas(4)  glm::float32 roughness;
-};
-
-struct UBO_light_spv : UniformBufferObject {
-    alignas(16) glm::vec4 lightCol;
+    alignas(16) glm::vec4 lightColor;
 };
 
 #endif

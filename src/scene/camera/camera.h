@@ -23,6 +23,9 @@ public:
 	Camera();
 	~Camera();
 
+	void recalculateAspectRatio();
+	void recalculateViewProjection();
+
 	// orientation vectors
 	glm::vec3		m_forward;
 	glm::vec3		m_right;
@@ -44,7 +47,10 @@ public:
 	float			m_theta, m_phi;   // Degrees along the sphere the camera is positioned
 	float			m_radius;       // Radius through the sphere the camera is positioned
 
-	void recalculateAspectRatio();
+	// view projection
+	glm::mat4		m_view_projection;
+
+	
 
 private:
 

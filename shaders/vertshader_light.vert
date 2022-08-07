@@ -1,11 +1,25 @@
 #version 450
 
-layout(binding = 0) uniform UniformBufferObject {
+struct PointLight {    
+    vec4 pos;
+	vec4 col;
+}; 
+
+layout(binding = 0) uniform UBO_PerRenderPass {
+    mat4 view_projection;
+	vec4 camera_position;
+} ubo_renderpass;
+
+layout(binding = 1) uniform UBO_PerPrimitive {
     mat4 model;
-    mat4 view;
-    mat4 proj;
-	vec4 lightCol;
-} ubo;
+	mat4 modelInvTr;
+	PointLight pointlights[10];
+	float metallic;
+	float roughness;
+	vec4 lightColor;
+} ubo_primitve;
+
+
 
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNor;
@@ -14,5 +28,5 @@ layout(location = 3) in vec3 inBit;
 layout(location = 4) in vec2 inUV;
 
 void main() {	
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPos, 1.0);
+    gl_Position = ubo_renderpass.view_projection * ubo_primitve.model * vec4(inPos, 1.0);
 }

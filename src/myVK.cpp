@@ -87,6 +87,7 @@ void MyVK::initVulkan() {
 
     descriptorpool.createDescriptorPool(logicaldevice, MAX_FRAMES_IN_FLIGHT);
 
+    m_scene.createUniformBuffers(MAX_FRAMES_IN_FLIGHT, logicaldevice, physicaldevice);
     m_scene.loadSceneFromJSON(m_scenefile, logicaldevice, physicaldevice, swapchain, commandpool, descriptorpool, renderpass, msaabuffer, MAX_FRAMES_IN_FLIGHT);
 
     m_gui.setup(window, vulkaninstance, surface, logicaldevice, physicaldevice, swapchain, descriptorpool, &m_scene.m_primitives, &m_scene.m_camera);
@@ -97,41 +98,42 @@ void MyVK::initVulkan() {
 
 void MyVK::updateUniformBuffer(uint32_t currentImage) {
     m_scene.m_camera.recalculateAspectRatio();
+    m_scene.m_ubo_per_renderpass.view_projection = m_scene.m_camera.m_view_projection;
+    m_scene.m_ubo_per_renderpass.camera_position = glm::vec4(m_scene.m_camera.m_eye,0);
+    void* dataR;
+    vkMapMemory(logicaldevice.device, m_scene.m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_ubo_per_renderpass), 0, &dataR);
+    memcpy(dataR, &m_scene.m_ubo_per_renderpass, sizeof(m_scene.m_ubo_per_renderpass));
+    vkUnmapMemory(logicaldevice.device, m_scene.m_uniformbuffers[currentImage].vkBufferMemory);
 
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
+
+
     for (int i = 0; i < m_scene.m_primitives.size(); ++i) {
         if (m_scene.m_primitives[i]->m_light != nullptr) {
             // light
             m_scene.m_primitives[i]->setTranslation(m_scene.m_primitives[i]->m_light->m_center);
-            m_scene.m_primitives[i]->m_ubo_light.model = m_scene.m_primitives[i]->m_modelMatrix;
-            m_scene.m_primitives[i]->m_ubo_light.view = glm::lookAt(m_scene.m_camera.m_eye, m_scene.m_camera.m_ref, m_scene.m_camera.m_up);
-            m_scene.m_primitives[i]->m_ubo_light.proj = glm::perspective(m_scene.m_camera.m_fovy, m_scene.m_camera.m_aspect, m_scene.m_camera.m_near, m_scene.m_camera.m_far);
-            m_scene.m_primitives[i]->m_ubo_light.proj[1][1] *= -1;
-            m_scene.m_primitives[i]->m_ubo_light.lightCol = glm::vec4(m_scene.m_primitives[i]->m_light->m_intensity, 0);
+            m_scene.m_primitives[i]->m_ubo_per_primitive.model = m_scene.m_primitives[i]->m_modelMatrix;
+            m_scene.m_primitives[i]->m_ubo_per_primitive.lightColor = glm::vec4(m_scene.m_primitives[i]->m_light->m_intensity, 0);
             void* data;
-            vkMapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_primitives[i]->m_ubo_light), 0, &data);
-            memcpy(data, &m_scene.m_primitives[i]->m_ubo_light, sizeof(m_scene.m_primitives[i]->m_ubo_light));
+            vkMapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_primitives[i]->m_ubo_per_primitive), 0, &data);
+            memcpy(data, &m_scene.m_primitives[i]->m_ubo_per_primitive, sizeof(m_scene.m_primitives[i]->m_ubo_per_primitive));
             vkUnmapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory);
         }
         else {
             // not light
-            m_scene.m_primitives[i]->m_ubo.model = m_scene.m_primitives[i]->m_modelMatrix;
-            m_scene.m_primitives[i]->m_ubo.view = glm::lookAt(m_scene.m_camera.m_eye, m_scene.m_camera.m_ref, m_scene.m_camera.m_up);
-            m_scene.m_primitives[i]->m_ubo.proj = glm::perspective(m_scene.m_camera.m_fovy, m_scene.m_camera.m_aspect, m_scene.m_camera.m_near, m_scene.m_camera.m_far);
-            m_scene.m_primitives[i]->m_ubo.proj[1][1] *= -1;
-            m_scene.m_primitives[i]->m_ubo.modelInvTr = m_scene.m_primitives[i]->m_modelMatrixInvTrans;
-            m_scene.m_primitives[i]->m_ubo.camPos = glm::vec4(m_scene.m_camera.m_eye, 0);
+            m_scene.m_primitives[i]->m_ubo_per_primitive.model = m_scene.m_primitives[i]->m_modelMatrix;
+            m_scene.m_primitives[i]->m_ubo_per_primitive.modelInvTr = m_scene.m_primitives[i]->m_modelMatrixInvTrans;
             for (int j = 0; j < m_scene.m_lights.size(); ++j) {
-                m_scene.m_primitives[i]->m_ubo.pointlights[j].lightPos = glm::vec4(m_scene.m_lights[j]->m_center, 0);
-                m_scene.m_primitives[i]->m_ubo.pointlights[j].lightCol = glm::vec4(m_scene.m_lights[j]->m_intensity, 0);
+                m_scene.m_primitives[i]->m_ubo_per_primitive.pointlights[j].lightPos = glm::vec4(m_scene.m_lights[j]->m_center, 0);
+                m_scene.m_primitives[i]->m_ubo_per_primitive.pointlights[j].lightCol = glm::vec4(m_scene.m_lights[j]->m_intensity, 0);
             }
             void* data;
-            vkMapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_primitives[i]->m_ubo), 0, &data);
-            memcpy(data, &m_scene.m_primitives[i]->m_ubo, sizeof(m_scene.m_primitives[i]->m_ubo));
+            vkMapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_primitives[i]->m_ubo_per_primitive), 0, &data);
+            memcpy(data, &m_scene.m_primitives[i]->m_ubo_per_primitive, sizeof(m_scene.m_primitives[i]->m_ubo_per_primitive));
             vkUnmapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory);
         }
         
@@ -307,6 +309,9 @@ void MyVK::cleanup() {
     }
 
     // handle rest of myVK items
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        m_scene.m_uniformbuffers[i].destroyBuffer(logicaldevice);
+    }
     for (int q = 0; q < m_scene.m_primitives.size(); ++q) {
         m_scene.m_primitives[q]->m_texture.destroyImage(logicaldevice);
         m_scene.m_primitives[q]->m_normalmap.destroyImage(logicaldevice);

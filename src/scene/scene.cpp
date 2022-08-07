@@ -119,7 +119,7 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				m_primitives[primitive_count]->createVertexBuffer(logicaldevice, physicaldevice, commandpool);
 				m_primitives[primitive_count]->createIndexBuffer(logicaldevice, physicaldevice, commandpool);
 				m_primitives[primitive_count]->createUniformBuffers(maxFramesinFlight, logicaldevice, physicaldevice);
-				m_primitives[primitive_count]->m_descriptorsets.createDescriptorSets(maxFramesinFlight, logicaldevice, descriptorpool, m_primitives[primitive_count]->m_material->m_shader.descriptorsetlayout, m_primitives[primitive_count]->m_uniformbuffers, m_primitives[primitive_count]->m_texture, m_primitives[primitive_count]->m_normalmap);
+				m_primitives[primitive_count]->m_descriptorsets.createDescriptorSets(maxFramesinFlight, logicaldevice, descriptorpool, m_primitives[primitive_count]->m_material->m_shader.descriptorsetlayout, m_uniformbuffers, m_primitives[primitive_count]->m_uniformbuffers, m_primitives[primitive_count]->m_texture, m_primitives[primitive_count]->m_normalmap);
 				
 				primitive_count++;
 			}
@@ -182,7 +182,7 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				m_primitives[primitive_count]->createVertexBuffer(logicaldevice, physicaldevice, commandpool);
 				m_primitives[primitive_count]->createIndexBuffer(logicaldevice, physicaldevice, commandpool);
 				m_primitives[primitive_count]->createUniformBuffers(maxFramesinFlight, logicaldevice, physicaldevice);
-				m_primitives[primitive_count]->m_descriptorsets.createDescriptorSets_light(maxFramesinFlight, logicaldevice, descriptorpool, m_primitives[primitive_count]->m_material->m_shader.descriptorsetlayout, m_primitives[primitive_count]->m_uniformbuffers);
+				m_primitives[primitive_count]->m_descriptorsets.createDescriptorSets_light(maxFramesinFlight, logicaldevice, descriptorpool, m_primitives[primitive_count]->m_material->m_shader.descriptorsetlayout, m_uniformbuffers, m_primitives[primitive_count]->m_uniformbuffers);
 
 				primitive_count++;
 
@@ -191,5 +191,16 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 		else if (s.key() == "materials") {
 
 		}
+	}
+}
+
+// create buffers for the uniform variables (one for each frame in flight)
+void Scene::createUniformBuffers(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice) {
+	m_uniformbuffers.resize(maxFramesinFlight);
+
+	for (size_t j = 0; j < maxFramesinFlight; ++j) {
+		m_uniformbuffers[j].vkBufferSize = sizeof(UBO_PerRenderPass);
+
+		m_uniformbuffers[j].createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
 	}
 }

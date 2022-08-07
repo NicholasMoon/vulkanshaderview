@@ -22,6 +22,7 @@ class RenderPass;
 class MSAABuffer;
 
 
+
 class ShaderProgram {
 public:
 	ShaderProgram();
@@ -143,8 +144,7 @@ public:
 	glm::mat4									m_modelMatrix;
 	glm::mat4									m_modelMatrixInvTrans;
 
-	UBO_pbr_spv							m_ubo;
-	UBO_light_spv						m_ubo_light;
+	UBO_PerPrimitive							m_ubo_per_primitive;
 
 	// vulkan buffer data
 	Texture										m_texture;    // allocated on a per-primitive basis

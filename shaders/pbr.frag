@@ -5,20 +5,23 @@ struct PointLight {
 	vec4 col;
 }; 
 
-layout(binding = 0) uniform UniformBufferObject {
+layout(binding = 0) uniform UBO_PerRenderPass {
+    mat4 view_projection;
+	vec4 camera_position;
+} ubo_renderpass;
+
+layout(binding = 1) uniform UBO_PerPrimitive {
     mat4 model;
-    mat4 view;
-    mat4 proj;
 	mat4 modelInvTr;
-	vec4 camPos;
 	PointLight pointlights[10];
 	float metallic;
 	float roughness;
-} ubo;
+	vec4 lightColor;
+} ubo_primitve;
 
-layout(binding = 1) uniform sampler2D texSampler;
+layout(binding = 2) uniform sampler2D texSampler;
 
-layout(binding = 2) uniform sampler2D texSampler2;
+layout(binding = 3) uniform sampler2D texSampler2;
 
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNor;
@@ -82,29 +85,29 @@ void main()
 
 	for (int i = 0; i < 10; i++) {
 
-		if (ubo.pointlights[i].col.x != 0 && ubo.pointlights[i].col.y != 0 && ubo.pointlights[i].col.z != 0) {
+		if (ubo_primitve.pointlights[i].col.x != 0 && ubo_primitve.pointlights[i].col.y != 0 && ubo_primitve.pointlights[i].col.z != 0) {
 			// attenuate intensity inverse square law
-			vec3 fragToLightPos = ubo.pointlights[i].pos.xyz - fragPos;
+			vec3 fragToLightPos = ubo_primitve.pointlights[i].pos.xyz - fragPos;
 			float distanceSq = dot(fragToLightPos, fragToLightPos);
 			float inverseDistanceSq = 1.0f / distanceSq;
-			vec3 ithLightIrradiance = ubo.pointlights[i].col.rgb * inverseDistanceSq;
+			vec3 ithLightIrradiance = ubo_primitve.pointlights[i].col.rgb * inverseDistanceSq;
 
 			// get wi, wo, wh
 			vec3 wi = normalize(fragToLightPos);
-			vec3 wo = normalize(ubo.camPos.rgb - fragPos);
+			vec3 wo = normalize(ubo_renderpass.camera_position.rgb - fragPos);
 			vec3 wh = normalize(wo + wi);
 
 			// R term
-			vec3 R = mix(vec3(0.04), albedo, ubo.metallic);
+			vec3 R = mix(vec3(0.04), albedo, ubo_primitve.metallic);
 
 			// F term
 			vec3 F = fresnelReflectance(max(dot(wh, wo), 0.0), R);
 
 			// G term
-			float G = microfacetSelfShadow(ubo.roughness, wo, wi, normal);
+			float G = microfacetSelfShadow(ubo_primitve.roughness, wo, wi, normal);
 
 			// D term
-			float D = microfacetDistrib(ubo.roughness, normal, wh);
+			float D = microfacetDistrib(ubo_primitve.roughness, normal, wh);
 
 			// compute cook-torrance
 			vec3 f_cook_torrance = vec3(0,0,0);
@@ -115,7 +118,7 @@ void main()
 			// compute lambert weighting
 			vec3 kd = vec3(1.0f) - F;
 
-			kd *= (1.0f - ubo.metallic);
+			kd *= (1.0f - ubo_primitve.metallic);
 
 			vec3 f_lambert = albedo * 0.31831015504887652430775499030746f;
 			vec3 f = kd * f_lambert + f_cook_torrance;

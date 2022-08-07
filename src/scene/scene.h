@@ -29,6 +29,9 @@ public:
 
 	void loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, Swapchain& swapchain, CommandPool& commandpool, DescriptorPool& descriptorpool, RenderPass& renderpass, MSAABuffer& msaabuffer, uint32_t maxFramesinFlight);
 
+	// create buffers for the uniform variables (one for each frame in flight)
+	void createUniformBuffers(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
+
 	// scene data
 	std::vector<std::unique_ptr<Primitive>>			m_primitives;
 	std::vector<std::unique_ptr<Mesh>>				m_meshes;
@@ -36,6 +39,9 @@ public:
 	Camera											m_camera;
 
 	std::vector<std::unique_ptr<Material>>			m_materials;
+
+	UBO_PerRenderPass							m_ubo_per_renderpass;
+	std::vector<DataBuffer>						m_uniformbuffers;
 
 private:
 
