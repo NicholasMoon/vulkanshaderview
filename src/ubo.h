@@ -18,6 +18,9 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
+};
+
+struct UBO_pbr_spv : UniformBufferObject {
     alignas(16) glm::mat4 modelInvTr;
     alignas(16) glm::vec4 camPos;
     alignas(16) PointLight_ubo pointlights[10];
@@ -25,10 +28,7 @@ struct UniformBufferObject {
     alignas(4)  glm::float32 roughness;
 };
 
-struct UBO_light_spv {
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
+struct UBO_light_spv : UniformBufferObject {
     alignas(16) glm::vec4 lightCol;
 };
 

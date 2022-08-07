@@ -126,10 +126,8 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 		}
 		else if (s.key() == "lights") {
 			std::string obj_file = "../models/light.obj";
-			std::string vs = "../shaders/vertshader.spv";
+			std::string vs = "../shaders/vertshader_light.spv";
 			std::string fs = "../shaders/light.spv";
-			std::string albedo_map = "../textures/white.png";
-			std::string normal_map = "../textures/norm0.png";
 
 			for (auto p : s.value().items()) {
 				auto name = p.value()["name"].get<std::string>();
@@ -181,18 +179,10 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				m_primitives[primitive_count]->m_light->m_center = glm::vec3(translate[0], translate[1], translate[2]);
 				m_primitives[primitive_count]->m_light->m_intensity = glm::vec3(lightColor[0], lightColor[1], lightColor[2]);
 
-				m_primitives[primitive_count]->m_texture.createTextureImage(albedo_map, logicaldevice, physicaldevice, commandpool);
-				m_primitives[primitive_count]->m_texture.createTextureImageView(logicaldevice);
-				m_primitives[primitive_count]->m_texture.createTextureSampler(logicaldevice, physicaldevice);
-
-				m_primitives[primitive_count]->m_normalmap.createTextureImage(normal_map, logicaldevice, physicaldevice, commandpool);
-				m_primitives[primitive_count]->m_normalmap.createTextureImageView(logicaldevice);
-				m_primitives[primitive_count]->m_normalmap.createTextureSampler(logicaldevice, physicaldevice);
-
 				m_primitives[primitive_count]->createVertexBuffer(logicaldevice, physicaldevice, commandpool);
 				m_primitives[primitive_count]->createIndexBuffer(logicaldevice, physicaldevice, commandpool);
 				m_primitives[primitive_count]->createUniformBuffers(maxFramesinFlight, logicaldevice, physicaldevice);
-				m_primitives[primitive_count]->m_descriptorsets.createDescriptorSets(maxFramesinFlight, logicaldevice, descriptorpool, m_primitives[primitive_count]->m_material->m_shader.descriptorsetlayout, m_primitives[primitive_count]->m_uniformbuffers, m_primitives[primitive_count]->m_texture, m_primitives[primitive_count]->m_normalmap);
+				m_primitives[primitive_count]->m_descriptorsets.createDescriptorSets_light(maxFramesinFlight, logicaldevice, descriptorpool, m_primitives[primitive_count]->m_material->m_shader.descriptorsetlayout, m_primitives[primitive_count]->m_uniformbuffers);
 
 				primitive_count++;
 

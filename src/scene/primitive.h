@@ -56,9 +56,11 @@ public:
 
 	DescriptorSetLayout             descriptorsetlayout;
 
-private:
 	std::string vertexShaderFile;
 	std::string fragmentShaderFile;
+
+private:
+	
 
 
 };
@@ -141,7 +143,8 @@ public:
 	glm::mat4									m_modelMatrix;
 	glm::mat4									m_modelMatrixInvTrans;
 
-	UniformBufferObject							m_ubo;
+	UBO_pbr_spv							m_ubo;
+	UBO_light_spv						m_ubo_light;
 
 	// vulkan buffer data
 	Texture										m_texture;    // allocated on a per-primitive basis

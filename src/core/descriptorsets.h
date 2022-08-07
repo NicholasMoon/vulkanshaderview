@@ -27,6 +27,8 @@ public:
 
 	void createDescriptorSets(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout& descriptorsetlayout, std::vector<DataBuffer>& uniformBuffers, Texture& texture, Texture& normalmap);
 
+	void createDescriptorSets_light(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout& descriptorsetlayout, std::vector<DataBuffer>& uniformBuffers);
+
 	std::vector<VkDescriptorSet> vkDescriptorSets;
 private:
 

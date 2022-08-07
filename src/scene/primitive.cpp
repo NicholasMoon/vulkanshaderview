@@ -58,10 +58,19 @@ void Primitive::createIndexBuffer(LogicalDevice& logicaldevice, PhysicalDevice& 
 void Primitive::createUniformBuffers(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice) {
     m_uniformbuffers.resize(maxFramesinFlight);
 
-    for (size_t j = 0; j < maxFramesinFlight; ++j) {
-        m_uniformbuffers[j].vkBufferSize = sizeof(UniformBufferObject);
+    if (m_material->m_shader.fragmentShaderFile == "../shaders/light.spv") {
+        for (size_t j = 0; j < maxFramesinFlight; ++j) {
+            m_uniformbuffers[j].vkBufferSize = sizeof(UBO_light_spv);
 
-        m_uniformbuffers[j].createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
+            m_uniformbuffers[j].createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
+        }
+    }
+    else {
+        for (size_t j = 0; j < maxFramesinFlight; ++j) {
+            m_uniformbuffers[j].vkBufferSize = sizeof(UBO_pbr_spv);
+
+            m_uniformbuffers[j].createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, logicaldevice, physicaldevice);
+        }
     }
 }
 
@@ -153,7 +162,13 @@ void ShaderProgram::create(LogicalDevice& logicaldevice) {
     bindingDescription = Vertex::getBindingDescription();
     attributeDescriptions = Vertex::getAttributeDescriptions();
 
-    descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
+    if (fragmentShaderFile == "../shaders/light.spv") {
+        descriptorsetlayout.createDescriptorSetLayout_light(logicaldevice);
+    }
+    else {
+        descriptorsetlayout.createDescriptorSetLayout(logicaldevice);
+    }
+    
 }
 
 // read file as binary data and fill vector with bytes

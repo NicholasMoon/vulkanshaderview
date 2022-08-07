@@ -22,6 +22,8 @@ public:
 
 	// create uniform buffer and texture sampler descriptors
 	void createDescriptorSetLayout(LogicalDevice& logicaldevice);
+	// create uniform buffer and texture sampler descriptors
+	void createDescriptorSetLayout_light(LogicalDevice& logicaldevice);
 
 	void destroyDescriptorSetLayout(LogicalDevice& logicaldevice);
 

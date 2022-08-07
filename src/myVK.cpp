@@ -107,23 +107,39 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
         if (m_scene.m_primitives[i]->m_light != nullptr) {
             // light
             m_scene.m_primitives[i]->setTranslation(m_scene.m_primitives[i]->m_light->m_center);
+            m_scene.m_primitives[i]->m_ubo_light.model = m_scene.m_primitives[i]->m_modelMatrix;
+            m_scene.m_primitives[i]->m_ubo_light.view = glm::lookAt(m_scene.m_camera.m_eye, m_scene.m_camera.m_ref, m_scene.m_camera.m_up);
+            m_scene.m_primitives[i]->m_ubo_light.proj = glm::perspective(m_scene.m_camera.m_fovy, m_scene.m_camera.m_aspect, m_scene.m_camera.m_near, m_scene.m_camera.m_far);
+            m_scene.m_primitives[i]->m_ubo_light.proj[1][1] *= -1;
+            m_scene.m_primitives[i]->m_ubo_light.lightCol = glm::vec4(m_scene.m_primitives[i]->m_light->m_intensity, 0);
+            void* data;
+            vkMapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_primitives[i]->m_ubo_light), 0, &data);
+            memcpy(data, &m_scene.m_primitives[i]->m_ubo_light, sizeof(m_scene.m_primitives[i]->m_ubo_light));
+            vkUnmapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory);
         }
-        m_scene.m_primitives[i]->m_ubo.model = m_scene.m_primitives[i]->m_modelMatrix;
-        m_scene.m_primitives[i]->m_ubo.view = glm::lookAt(m_scene.m_camera.m_eye, m_scene.m_camera.m_ref, m_scene.m_camera.m_up);
-        m_scene.m_primitives[i]->m_ubo.proj = glm::perspective(m_scene.m_camera.m_fovy, m_scene.m_camera.m_aspect, m_scene.m_camera.m_near, m_scene.m_camera.m_far);
-        m_scene.m_primitives[i]->m_ubo.proj[1][1] *= -1;
-        m_scene.m_primitives[i]->m_ubo.modelInvTr = m_scene.m_primitives[i]->m_modelMatrixInvTrans;
-        m_scene.m_primitives[i]->m_ubo.camPos = glm::vec4(m_scene.m_camera.m_eye, 0);
-        for (int j = 0; j < m_scene.m_lights.size(); ++j) {
-            m_scene.m_primitives[i]->m_ubo.pointlights[j].lightPos = glm::vec4(m_scene.m_lights[j]->m_center, 0);
-            m_scene.m_primitives[i]->m_ubo.pointlights[j].lightCol = glm::vec4(m_scene.m_lights[j]->m_intensity, 0);
+        else {
+            // not light
+            m_scene.m_primitives[i]->m_ubo.model = m_scene.m_primitives[i]->m_modelMatrix;
+            m_scene.m_primitives[i]->m_ubo.view = glm::lookAt(m_scene.m_camera.m_eye, m_scene.m_camera.m_ref, m_scene.m_camera.m_up);
+            m_scene.m_primitives[i]->m_ubo.proj = glm::perspective(m_scene.m_camera.m_fovy, m_scene.m_camera.m_aspect, m_scene.m_camera.m_near, m_scene.m_camera.m_far);
+            m_scene.m_primitives[i]->m_ubo.proj[1][1] *= -1;
+            m_scene.m_primitives[i]->m_ubo.modelInvTr = m_scene.m_primitives[i]->m_modelMatrixInvTrans;
+            m_scene.m_primitives[i]->m_ubo.camPos = glm::vec4(m_scene.m_camera.m_eye, 0);
+            for (int j = 0; j < m_scene.m_lights.size(); ++j) {
+                m_scene.m_primitives[i]->m_ubo.pointlights[j].lightPos = glm::vec4(m_scene.m_lights[j]->m_center, 0);
+                m_scene.m_primitives[i]->m_ubo.pointlights[j].lightCol = glm::vec4(m_scene.m_lights[j]->m_intensity, 0);
+            }
+            void* data;
+            vkMapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_primitives[i]->m_ubo), 0, &data);
+            memcpy(data, &m_scene.m_primitives[i]->m_ubo, sizeof(m_scene.m_primitives[i]->m_ubo));
+            vkUnmapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory);
         }
         
+        
+        
+        
 
-        void* data;
-        vkMapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory, 0, sizeof(m_scene.m_primitives[i]->m_ubo), 0, &data);
-        memcpy(data, &m_scene.m_primitives[i]->m_ubo, sizeof(m_scene.m_primitives[i]->m_ubo));
-        vkUnmapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory);
+        
     }
 }
 
