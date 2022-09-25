@@ -1,5 +1,5 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#ifndef CUBEMAP_H
+#define CUBEMAP_H
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -10,6 +10,7 @@
 #include <set>
 #include <iostream>
 #include <vector>
+#include <stdint.h>
 
 #include "image.h"
 
@@ -18,27 +19,25 @@
 #include "../core/commandpool.h"
 #include "../databuffer/databuffer.h"
 
-class Texture : Image {
+class CubeMap : Image {
 public:
-	Texture();
-	~Texture();
+	CubeMap();
+	~CubeMap();
 
 	// creates a texture from an image
-	void createTextureImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool);
-	// generates mip maps of a source image
-	void generateMipmaps(PhysicalDevice& physicaldevice, LogicalDevice& logicaldevice, CommandPool& commandpool);
+	void createCubeMapImage(std::string texturepath, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice, CommandPool& commandpool);
 
-	void createTextureImageView(LogicalDevice& logicaldevice);
+	void createCubeMapImageView(LogicalDevice& logicaldevice);
 
 	// create texture sampler used to access image texels in fragment shader
-	void createTextureSampler(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
+	void createCubeMapSampler(LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
 	// destroys vulkan components related to Image
 	virtual void destroyImage(LogicalDevice& logicaldevice);
 
 	uint32_t mipLevels;			// number of mip levels (calculated from width and height of image)
 	VkSampler vkTextureSampler;	// handle for texture sampler
-	std::string fileName;
+	std::string directoryPath;
 
 	VkImage get_vkImage() { return vkImage; }
 	VkDeviceMemory get_vkImageMemory() { return vkImageMemory; }

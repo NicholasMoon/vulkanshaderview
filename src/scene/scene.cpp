@@ -24,6 +24,9 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 	std::unordered_map<std::string, int> OBJfiles;
 	std::unordered_map<std::string, int> Shaderfiles;
 
+
+	
+
     auto sceneData = j["scene"];
 	for (auto s : sceneData.items()) {
 		if (s.key() == "camera") {
@@ -50,7 +53,7 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 			m_camera.m_height = height;
 			m_camera.recalculateAspectRatio();
 			m_camera.m_near = 0.1f;
-			m_camera.m_far = 30.0f;
+			m_camera.m_far = 200.0f;
 		}
 		else if (s.key() == "primitives") {
 			for (auto p : s.value().items()) {
@@ -123,6 +126,37 @@ void Scene::loadSceneFromJSON(std::string& filePath, LogicalDevice& logicaldevic
 				
 				primitive_count++;
 			}
+		}
+		else if (s.key() == "skybox") {
+			auto cubemap_directory = s.value()["cubemap_directory"];
+
+			m_primitives.push_back(std::make_unique<Primitive>());
+
+			// add cube obj for environment map geometry
+			m_meshes.push_back(std::make_unique<Mesh>());
+			std::string skybox_obj = "../models/skycube.obj";
+			m_meshes[mesh_count]->loadOBJ(skybox_obj);
+			OBJfiles[skybox_obj] = mesh_count;
+			m_primitives[primitive_count]->m_geometry = m_meshes[mesh_count].get();
+			mesh_count++;
+
+			std::string vs = "../shaders/vertshader_envMap.spv";
+			std::string fs = "../shaders/envMap.spv";
+			createMaterialFromShaderFiles(vs, fs, logicaldevice, swapchain, renderpass, msaabuffer);
+			Shaderfiles[fs] = shader_count;
+			m_primitives[primitive_count]->m_material = m_materials[shader_count].get();
+			shader_count++;
+			
+			m_primitives[primitive_count]->m_cubemap.createCubeMapImage(cubemap_directory, logicaldevice, physicaldevice, commandpool);
+			m_primitives[primitive_count]->m_cubemap.createCubeMapImageView(logicaldevice);
+			m_primitives[primitive_count]->m_cubemap.createCubeMapSampler(logicaldevice, physicaldevice);
+
+			m_primitives[primitive_count]->createVertexBuffer(logicaldevice, physicaldevice, commandpool);
+			m_primitives[primitive_count]->createIndexBuffer(logicaldevice, physicaldevice, commandpool);
+			m_primitives[primitive_count]->m_descriptorsets.createDescriptorSets_skybox(maxFramesinFlight, logicaldevice, descriptorpool, m_primitives[primitive_count]->m_material->m_shader.descriptorsetlayout, m_uniformbuffers, m_primitives[primitive_count]->m_cubemap);
+
+			primitive_count++;
+
 		}
 		else if (s.key() == "lights") {
 			std::string obj_file = "../models/light.obj";

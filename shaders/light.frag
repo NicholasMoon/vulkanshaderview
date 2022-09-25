@@ -19,12 +19,6 @@ layout(binding = 1) uniform UBO_PerPrimitive {
 	vec4 lightColor;
 } ubo_primitve;
 
-layout(binding = 2) uniform sampler2D texSampler;
-
-layout(binding = 3) uniform sampler2D texSampler2;
-
-
-
 layout(location = 0) out vec4 outColor;
 
 void main() {

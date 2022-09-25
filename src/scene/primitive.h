@@ -149,6 +149,7 @@ public:
 	// vulkan buffer data
 	Texture										m_texture;    // allocated on a per-primitive basis
 	Texture										m_normalmap;
+	CubeMap										m_cubemap;
 	DataBuffer									m_vertexbuffer;
 	DataBuffer									m_indexbuffer;
 	std::vector<DataBuffer>						m_uniformbuffers;

@@ -32,6 +32,7 @@ layout(location = 4) in vec2 fragUV;
 layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159f;
+const float GAMMA = 0.45454545454f;
 
 vec3 fresnelReflectance(float cosViewingAngle, vec3 R) {
     float cosTheta = clamp(1 - cosViewingAngle, 0.f, 1.f);
@@ -131,6 +132,9 @@ void main()
 
 	// reinhard (HDR)
 	Lo = Lo / (Lo + vec3(1.0f, 1.0f, 1.0f));
+
+	// gamma correct
+	Lo = pow(Lo, vec3(GAMMA, GAMMA, GAMMA));
 
 	outColor = vec4(Lo, 1);
 }

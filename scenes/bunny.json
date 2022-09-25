@@ -20,80 +20,13 @@
 		  },
 		  "vs" : "../shaders/vertshader.spv",
 		  "fs" : "../shaders/pbr.spv",
-		  "albedo_map" : "../textures/white.png",
-		  "normal_map" : "../textures/norm0.png"
-		},
-		{
-		  "name" : "bunny1",
-		  "obj_file" : "../models/stanford-bunny.obj",
-		  "material" : "matteRed",
-		  "transform" : {
-			"translate" : [0,0,-2],
-			"rotate" : [0, 0, 0],
-			"scale" : [1, 1, 1]
-		  },
-		  "vs" : "../shaders/vertshader.spv",
-		  "fs" : "../shaders/pbr.spv",
-		  "albedo_map" : "../textures/white.png",
-		  "normal_map" : "../textures/norm0.png"
-		},
-		{
-		  "name" : "bunny2",
-		  "obj_file" : "../models/stanford-bunny.obj",
-		  "material" : "matteRed",
-		  "transform" : {
-			"translate" : [0,0,-4],
-			"rotate" : [0, 0, 0],
-			"scale" : [1, 1, 1]
-		  },
-		  "vs" : "../shaders/vertshader.spv",
-		  "fs" : "../shaders/pbr.spv",
-		  "albedo_map" : "../textures/white.png",
-		  "normal_map" : "../textures/norm0.png"
-		},
-		{
-		  "name" : "bunny3",
-		  "obj_file" : "../models/stanford-bunny.obj",
-		  "material" : "matteRed",
-		  "transform" : {
-			"translate" : [0,0,-6],
-			"rotate" : [0, 0, 0],
-			"scale" : [1, 1, 1]
-		  },
-		  "vs" : "../shaders/vertshader.spv",
-		  "fs" : "../shaders/pbr.spv",
-		  "albedo_map" : "../textures/white.png",
-		  "normal_map" : "../textures/norm0.png"
-		},
-		{
-		  "name" : "bunny4",
-		  "obj_file" : "../models/stanford-bunny.obj",
-		  "material" : "matteRed",
-		  "transform" : {
-			"translate" : [0,0,-8],
-			"rotate" : [0, 0, 0],
-			"scale" : [1, 1, 1]
-		  },
-		  "vs" : "../shaders/vertshader.spv",
-		  "fs" : "../shaders/pbr.spv",
-		  "albedo_map" : "../textures/white.png",
-		  "normal_map" : "../textures/norm0.png"
-		},
-		{
-		  "name" : "bunny5",
-		  "obj_file" : "../models/stanford-bunny.obj",
-		  "material" : "matteRed",
-		  "transform" : {
-			"translate" : [0,0,-10],
-			"rotate" : [0, 0, 0],
-			"scale" : [1, 1, 1]
-		  },
-		  "vs" : "../shaders/vertshader.spv",
-		  "fs" : "../shaders/pbr.spv",
-		  "albedo_map" : "../textures/white.png",
+		  "albedo_map" : "../textures/brick.jpg",
 		  "normal_map" : "../textures/norm0.png"
 		}
 	  ],
+	  "skybox" : {
+		"cubemap_directory" : "../textures/skybox/FishermansBastion"
+	  },
 	  "lights" : [
 		{
 		  "name" : "Light Source",

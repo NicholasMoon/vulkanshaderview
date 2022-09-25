@@ -4,6 +4,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <stb_image.h>
+
 #include <cstdint>
 
 #include "../device/physicaldevice.h"
@@ -18,15 +20,15 @@ public:
 	~Image();
 
 	// create vulkan image
-	void createImage(uint32_t mipLevels, VkSampleCountFlagBits numSamples, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
+	void createImage(uint32_t mipLevels, VkImageCreateInfo& imageInfo, LogicalDevice& logicaldevice, PhysicalDevice& physicaldevice);
 
-	void copyBufferToImage(VkBuffer buffer, CommandPool& commandpool, LogicalDevice& logicaldevice);
+	void copyBufferToImage(VkBuffer buffer, CommandPool& commandpool, LogicalDevice& logicaldevice, uint32_t layerCount);
 
 	// function to synchronize transition between staging buffer and vulkan image
-	void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, CommandPool& commandpool, LogicalDevice& logicaldevice);
+	void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, CommandPool& commandpool, LogicalDevice& logicaldevice, uint32_t layerCount);
 
 	// creates an image view
-	VkImageView createImageView(uint32_t mipLevels, LogicalDevice& logicaldevice);
+	VkImageView createImageView(VkImageViewCreateInfo& viewInfo, LogicalDevice& logicaldevice);
 
 	bool hasStencilComponent();
 

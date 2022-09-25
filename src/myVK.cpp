@@ -123,6 +123,10 @@ void MyVK::updateUniformBuffer(uint32_t currentImage) {
             memcpy(data, &m_scene.m_primitives[i]->m_ubo_per_primitive, sizeof(m_scene.m_primitives[i]->m_ubo_per_primitive));
             vkUnmapMemory(logicaldevice.device, m_scene.m_primitives[i]->m_uniformbuffers[currentImage].vkBufferMemory);
         }
+        else if (m_scene.m_primitives[i]->m_material->m_shader.fragmentShaderFile == "../shaders/envMap.spv") {
+            // envmap
+
+        }
         else {
             // not light
             m_scene.m_primitives[i]->m_ubo_per_primitive.model = m_scene.m_primitives[i]->m_modelMatrix;
@@ -164,6 +168,7 @@ void MyVK::drawFrame() {
 
     // only reset fence if swapchain didn't need to be recreated
     vkResetFences(logicaldevice.device, 1, &inFlightFences[currentFrame]);
+
 
     // update uniforms
     updateUniformBuffer(currentFrame);
@@ -223,6 +228,7 @@ void MyVK::drawFrame() {
     }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    ++incr;
 }
 
 // handle cleanup of swapchain parts
@@ -312,11 +318,25 @@ void MyVK::cleanup() {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         m_scene.m_uniformbuffers[i].destroyBuffer(logicaldevice);
     }
-    for (int q = 0; q < m_scene.m_primitives.size(); ++q) {
-        m_scene.m_primitives[q]->m_texture.destroyImage(logicaldevice);
-        m_scene.m_primitives[q]->m_normalmap.destroyImage(logicaldevice);
+    for (int q = 0; q < m_scene.m_primitives.size(); ++q) { 
+        if (m_scene.m_primitives[q]->m_material->m_shader.fragmentShaderFile == "../shaders/envMap.spv") {
+            m_scene.m_primitives[q]->m_cubemap.destroyImage(logicaldevice);
+        }
+        else if (m_scene.m_primitives[q]->m_material->m_shader.fragmentShaderFile == "../shaders/light.spv") {
+
+        }
+        else {
+            m_scene.m_primitives[q]->m_texture.destroyImage(logicaldevice);
+            m_scene.m_primitives[q]->m_normalmap.destroyImage(logicaldevice);
+        }
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            m_scene.m_primitives[q]->m_uniformbuffers[i].destroyBuffer(logicaldevice);
+            if (m_scene.m_primitives[q]->m_material->m_shader.fragmentShaderFile == "../shaders/envMap.spv") {
+
+            }
+            else {
+                m_scene.m_primitives[q]->m_uniformbuffers[i].destroyBuffer(logicaldevice);
+            }
+            
         }
     }
     descriptorpool.destroyDescriptorPool(logicaldevice);

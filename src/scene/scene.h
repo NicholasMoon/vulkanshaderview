@@ -15,6 +15,7 @@
 #include "../image/msaabuffer.h"
 #include "../device/logicaldevice.h"
 #include "camera/camera.h"
+#include "../image/cubemap.h"
 
 #include "primitive.h"
 

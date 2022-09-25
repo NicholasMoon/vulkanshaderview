@@ -15,6 +15,7 @@
 
 #include "../ubo.h"
 #include "../image/texture.h"
+#include "../image/cubemap.h"
 #include "../databuffer/databuffer.h"
 
 class Texture;
@@ -28,6 +29,8 @@ public:
 	void createDescriptorSets(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout& descriptorsetlayout, std::vector<DataBuffer>& ubufs_per_renderpass, std::vector<DataBuffer>& ubufs_per_primitive, Texture& texture, Texture& normalmap);
 
 	void createDescriptorSets_light(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout& descriptorsetlayout, std::vector<DataBuffer>& ubufs_per_renderpass, std::vector<DataBuffer>& ubufs_per_primitive);
+
+	void createDescriptorSets_skybox(uint32_t maxFramesinFlight, LogicalDevice& logicaldevice, DescriptorPool& descriptorpool, DescriptorSetLayout& descriptorsetlayout, std::vector<DataBuffer>& ubufs, CubeMap& cubemap);
 
 	std::vector<VkDescriptorSet> vkDescriptorSets;
 private:
